@@ -46,6 +46,9 @@ class HookableHandler:
         else:
             getattr(self._output_handler, method_name)(*args, **kw)
 
+    def setDocumentLocator(self, parser):
+        self._output_handler.setDocumentLocator(parser)
+        
     def startDocument(self):
         self._hookedExecute('startDocument')
         

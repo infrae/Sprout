@@ -169,6 +169,25 @@ class XMLImportTestCase(unittest.TestCase):
         self.assertEquals(line_number, 5)
         self.assertEquals(col_count, 3)
 
+    def test_importWithFilterHandler(self):
+        result = Doc()
+
+        # a handler that replaces Foo with Bar
+        from sprout.saxext.hookablehandler import HookableHandler        
+        class FooBarHandler(HookableHandler):
+            def characters_preprocess(self, data):
+                if data == 'Foo':
+                    return ['Bar']
+                else:
+                    return [data]
+        settings = xmlimport.BaseSettings(import_filter_factory=FooBarHandler)
+        self._importer.importFromString('<alpha><beta>Foo</beta></alpha>', 
+            result=result, settings=settings)
+        sub = result.getAlpha().getSub()
+        # filter should replace any Foo with Bar
+        self.assertEquals('Bar', sub[0].getValue())
+
+        
     def test_resultIsResult(self):
         # check whether result from the function is the same as
         # result we pass int

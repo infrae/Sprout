@@ -29,12 +29,16 @@ class BaseSettings(object):
 
     Subclass this for custom settings objects.
     """
-    def __init__(self, ignore_not_allowed=False):
+    def __init__(self, ignore_not_allowed=False, import_filter_factory=None):
         self._ignore_not_allowed = ignore_not_allowed
+        self._import_filter_factory = import_filter_factory
         
     def ignoreNotAllowed(self):
         return self._ignore_not_allowed
-    
+       
+    def getImportFilterFactory(self):
+        return self._import_filter_factory
+
 # null settings contains the default settings
 NULL_SETTINGS = BaseSettings()
 IGNORE_SETTINGS = BaseSettings(ignore_not_allowed=True)
@@ -82,11 +86,13 @@ class Importer:
                    by handlers (optional)
         result - initial result object to attach everything to (optional)
 
+        Does not apply any import filters.
+        
         returns handler object. handler.result() gives the end result, or pass
         initial result yourself.
         """
         return _SaxImportHandler(self, settings, result, info)
-
+   
     def importFromFile(self, f, settings=NULL_SETTINGS,
                        result=None, info=None):
         """Import from file object.
@@ -96,13 +102,20 @@ class Importer:
                    by handlers (optional)
         result - initial result object to attach everything to (optional)
 
+        Applies an import filter if one is specified in the settings.
+        
         returns top result object
         """
         self.clear()
         handler = self.importHandler(settings, result, info)
         parser = xml.sax.make_parser()
         parser.setFeature(feature_namespaces, 1)
-        parser.setContentHandler(handler)
+        import_filter_factory = settings.getImportFilterFactory()
+        if import_filter_factory is not None:
+            parser_handler = import_filter_factory(handler)
+        else:
+            parser_handler = handler
+        parser.setContentHandler(parser_handler)
         handler.setDocumentLocator(parser)
         parser.parse(f)
         return handler.result()
