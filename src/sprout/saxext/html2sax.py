@@ -3,6 +3,8 @@ from HTMLParser import HTMLParser
 import re
 from htmlentitydefs import name2codepoint
 
+IMMEDIATE_CLOSE_TAGS = ['br']
+
 class Html2SaxParser(HTMLParser):
     """Turn arbitrary HTML events into XML-compliant SAX stream.
     """
@@ -26,11 +28,17 @@ class Html2SaxParser(HTMLParser):
         HTMLParser.close(self)
             
     def handle_starttag(self, tag, attrs):
+        if tag in IMMEDIATE_CLOSE_TAGS:
+            self._handler.startElementNS((None, tag), None, {})
+            self._handler.endElementNS((None, tag), None)
+            return
         self._handler.startElementNS((None, tag), None,
                                     self._createAttrDict(attrs))
         self._stack.append(tag)
        
     def handle_endtag(self, tag):
+        if tag in IMMEDIATE_CLOSE_TAGS:
+            return
         popped = []
         stack = self._stack[:]
         while stack:

@@ -86,24 +86,29 @@ class SubsetTestCase(unittest.TestCase):
 
     def test_br_evil(self):
         self.assertEquals(
-            '<p>Foo<br></br>Bar</p>',
+            '<p>Foo<br></br>heyBar</p>',
             self.parse('Foo<br>hey</br>Bar'))
 
     def test_br_evil2(self):
         self.assertEquals(
-            '<p>Foo<br></br>Bar</p>',
+            '<p>Foo<br></br><em>Hoi</em>Bar</p>',
             self.parse('Foo<br><i>Hoi</i></br>Bar'))
 
     def test_br_evil3(self):
         self.assertEquals(
-            '<p>Foo<br></br>Bar</p>',
+            '<p>Foo<br></br><em>Hoi<strong>Baz</strong></em>Bar</p>',
             self.parse('Foo<br><i>Hoi<b>Baz</b></i></br>Bar'))
 
     def test_br_evil4(self):
         self.assertEquals(
-            '<p>Foo<br></br>Bar</p>',
+            '<p>Foo<br></br>HoiBar</p>',
             self.parse('Foo<br>Hoi</br>Bar'))
 
+    def test_br_immediate_close(self):
+        self.assertEquals(
+            '<p>Foo<br></br>Bar</p>',
+            self.parse('Foo<br/>Bar'))
+        
     def test_unknown_tag(self):
         self.assertEquals(
             '<p>FooBar</p>',

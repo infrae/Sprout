@@ -56,6 +56,17 @@ class HTML2SaxTestCase(unittest.TestCase):
         self.assertEquals(
             'just text',
             makeXML('just text'))
+
+    def test_br(self):
+        # br closes right away
+        self.assertEquals(
+            '<br/>',
+            makeXML('<br>'))
+
+    def test_br2(self):
+        self.assertEquals(
+            '<br/>',
+            makeXML('<br></br>'))
         
 def test_suite():
     suite = unittest.TestSuite()

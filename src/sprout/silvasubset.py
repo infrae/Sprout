@@ -98,3 +98,5 @@ class BrHandler(htmlsubset.SubsetHandler):
         child = node.ownerDocument.createElement('br')
         node.appendChild(child)
         self.setResult(child)
+
+PARAGRAPH_SUBSET = createParagraphSubset()
