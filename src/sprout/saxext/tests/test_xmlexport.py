@@ -18,7 +18,7 @@ class FooXMLSource(MyXMLSource):
     def sax(self):
         self.startElement('foo')
         for bar in self.context._bars:
-            self.getXMLSource(bar).sax()
+            self.subsax(bar)
         self.endElement('foo')
 
 class BarXMLSource(MyXMLSource):
