@@ -1,3 +1,11 @@
+0.6
+---
+
+* In silva subset, treat \n as <br>
+
+* In html2sax, we're now making sure that any tags that cannot be singletons
+  in HTML are kept open, by adding an extra space character event.
+
 0.5
 ---
 
