@@ -48,7 +48,14 @@ class CollapsingHandlerTestCase(unittest.TestCase):
         self.assertEquals(
             'hoidag',
             handler.getLastCharacters())
-    
+
+    def test_empty(self):
+        # should not flush empty strings
+        handler = TestHandler()
+        c = CollapsingHandler(handler)
+        c.startElementNS((None, 'b'), None, {})
+        self.assertEquals(None, handler.getLastCharacters())
+        
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [CollapsingHandlerTestCase]:

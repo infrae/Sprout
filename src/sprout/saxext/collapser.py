@@ -13,8 +13,9 @@ class CollapsingHandler(HookableHandler):
         self._buffer.append(content)
     
     def _flushCharacters(self):
-        self.getOutputHandler().characters(''.join(self._buffer))
-        self._buffer = []
+        if self._buffer:
+            self.getOutputHandler().characters(''.join(self._buffer))
+            self._buffer = []
 
     startElementNS_simple = _flushCharacters
     endElementNS_simple = _flushCharacters
