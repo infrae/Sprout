@@ -19,4 +19,4 @@ class CollapsingHandler(HookableHandler):
 
     startElementNS_simple = _flushCharacters
     endElementNS_simple = _flushCharacters
-    processingInstructioN_simple = _flushCharacters
+    processingInstruction_simple = _flushCharacters
