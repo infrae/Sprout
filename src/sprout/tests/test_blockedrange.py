@@ -103,8 +103,8 @@ class BlockedRangesTestCase(unittest.TestCase):
     def test_block_all(self):
         b = Ranges(0, 10)
         b.block(0, 10)
-        #self.assertEquals([],
-        #                  b.getOpenRanges())
+        self.assertEquals([],
+                          b.getOpenRanges())
         self.assertEquals([(0, 10)],
                           b.getBlockedRanges())
         self.assertEquals([(0, 10, False)],
