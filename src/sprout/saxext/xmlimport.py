@@ -261,12 +261,13 @@ class DummyLocator:
         """
         return None
     
-class BaseHandler:
+class BaseHandler(object):
     """Base class of all handlers.
 
     This should be subclassed to implement your own handlers. 
     """
-    def __init__(self, parent, parent_handler, settings=NULL_SETTINGS, info=None):
+    def __init__(self, parent, parent_handler,
+                 settings=NULL_SETTINGS, info=None):
         """Initialize BaseHandler.
 
         parent - the parent object as being constructed in the import
