@@ -22,7 +22,7 @@ class Ranges:
                 open.append((s, i))
                 open.append((j, e))
             # i..s..e..j
-            elif i < s and j >= e:
+            elif i <= s and j >= e:
                 # all wiped out
                 pass
             # s..i...e...j
@@ -43,7 +43,7 @@ class Ranges:
     def getBlockedRanges(self):
         """Get all the ranges that are blocked.
         """
-        return [r for r in self.getRanges() if not r[2]]
+        return [r[:2] for r in self.getRanges() if not r[2]]
     
     def getRanges(self):
         """Get all ranges, with a third element indicating blocked status.
@@ -52,6 +52,7 @@ class Ranges:
         """
         ranges = []
         last_e = self._s
+        e = 0
         for s, e in self._open:
             if last_e != s:
                 ranges.append((last_e, s, False))
