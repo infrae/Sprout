@@ -1,0 +1,2 @@
+##parameters=test
+return test
