@@ -2,7 +2,7 @@
 import unittest
 from sprout.saxext import xmlexport
 from sprout.saxext.xmlexport import XMLExportError
-from sprout.saxext.stablegenerator import StableXMLGenerator
+from sprout.saxext.generator import XMLGenerator
 
 class Foo:
     def __init__(self, bars):
@@ -81,7 +81,7 @@ class XMLExportNamespaceTestCase(unittest.TestCase):
     def test_namespaced_attribute(self):
         tree = Foo([Baz()])
         self.assertEquals(
-            '<?xml version="1.0" encoding="utf-8"?>\n<foo xmlns="http://www.infrae.com/ns/test" xmlns:test2="http://www.infrae.com/ns/test2"><hm test2:attr="value"></hm></foo>',
+            '<?xml version="1.0" encoding="utf-8"?>\n<foo xmlns="http://www.infrae.com/ns/test" xmlns:test2="http://www.infrae.com/ns/test2"><hm test2:attr="value"/></foo>',
             self.exporter.exportToString(tree))
         
 class NoDefaultNamespaceTestCase(unittest.TestCase):
@@ -94,39 +94,33 @@ class NoDefaultNamespaceTestCase(unittest.TestCase):
     def test_no_namespace_declaration(self):
         tree = Foo([])
         self.assertEquals(
-            '<?xml version="1.0" encoding="utf-8"?>\n<foo></foo>',
+            '<?xml version="1.0" encoding="utf-8"?>\n<foo/>',
             self.exporter.exportToString(tree))
 
-class StableXMLGeneratorTest(unittest.TestCase):
+class CustomXMLGenerator(XMLGenerator):
+    def startElementNS(self, name, qname, attrs):
+        XMLGenerator.startElementNS(self, (None, 'hey'), None, {})
+        XMLGenerator.endElementNS(self, (None, 'hey'), None)
+        XMLGenerator.startElementNS(self, name, qname, attrs)
+    
+class XMLGeneratorTest(unittest.TestCase):
+
     def setUp(self):
-        exporter = xmlexport.Exporter(None, StableXMLGenerator)
+        exporter = xmlexport.Exporter(None, CustomXMLGenerator)
         exporter.registerProducer(
-            Moo, MooProducer)
+            Foo, FooProducer)
         self.exporter = exporter
-    def test_ordered_attributes(self):
-        tree = Moo(
-            'mooooooo!',
-            {
-                'name03':'Clara01',
-                'name09':'Clara02',
-                'name04':'Clara03',
-                'name06':'Clara04',
-                'name01':'Clara05',
-                'name05':'Clara06',
-                'name08':'Clara07',
-                'name02':'Clara08',
-                'name10':'Clara09',
-                'name07':'Clara10',
-                }
-                )
-        self.assertEquals(
-            '<?xml version="1.0" encoding="utf-8"?>\n<moo name01="Clara05" name02="Clara08" name03="Clara01" name04="Clara03" name05="Clara06" name06="Clara04" name07="Clara10" name08="Clara07" name09="Clara02" name10="Clara09">mooooooo!</moo>',
-            self.exporter.exportToString(tree))
         
+    def test_custom_generator(self):
+        tree = Foo([])
+        self.assertEquals(
+            '<?xml version="1.0" encoding="utf-8"?>\n<hey/><foo/>',
+            self.exporter.exportToString(tree))
+            
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [XMLExportTestCase, XMLExportNamespaceTestCase,
-         NoDefaultNamespaceTestCase, StableXMLGeneratorTest]:
+         NoDefaultNamespaceTestCase, XMLGeneratorTest]:
         suite.addTest(unittest.makeSuite(testcase))
     return suite
 

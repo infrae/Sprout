@@ -2,7 +2,7 @@
 An XML exporter based on SAX events.
 """
 from StringIO import StringIO
-from xml.sax import saxutils
+from sprout.saxext.generator import XMLGenerator
 
 class XMLExportError(Exception):
     pass
@@ -38,7 +38,7 @@ class Exporter:
         self._default_namespace = default_namespace
         self._namespaces = {}
         if generator is None:
-            generator = saxutils.XMLGenerator
+            generator = XMLGenerator
         self._generator = generator
 
     # MANIPULATORS

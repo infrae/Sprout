@@ -1,12 +1,12 @@
 import unittest
-from sprout.saxext.stablegenerator import StableXMLGenerator
+from sprout.saxext.generator import XMLGenerator
 from StringIO import StringIO
 
 class TestCase(unittest.TestCase):
 
     def test_immediateClose(self):
         f = StringIO()
-        g = StableXMLGenerator(f)
+        g = XMLGenerator(f)
         g.startElementNS((None, 'foo'), None, {})
         g.endElementNS((None, 'foo'), None)
         out = f.getvalue()
@@ -14,7 +14,7 @@ class TestCase(unittest.TestCase):
 
     def test_close_empty_characters(self):
         f = StringIO()
-        g = StableXMLGenerator(f)
+        g = XMLGenerator(f)
         g.startElementNS((None, 'foo'), None, {})
         g.characters('')
         g.endElementNS((None, 'foo'), None)
@@ -23,7 +23,7 @@ class TestCase(unittest.TestCase):
         
     def test_close_empty_whitespace(self):
         f = StringIO()
-        g = StableXMLGenerator(f)
+        g = XMLGenerator(f)
         g.startElementNS((None, 'foo'), None, {})
         g.ignorableWhitespace('')
         g.endElementNS((None, 'foo'), None)
@@ -32,7 +32,7 @@ class TestCase(unittest.TestCase):
 
     def test_notclose_characters(self):
         f = StringIO()
-        g = StableXMLGenerator(f)
+        g = XMLGenerator(f)
         g.startElementNS((None, 'foo'), None, {})
         g.characters('some characters')
         g.endElementNS((None, 'foo'), None)
@@ -41,7 +41,7 @@ class TestCase(unittest.TestCase):
 
     def test_notclose_ignorableWhitespace(self):
         f = StringIO()
-        g = StableXMLGenerator(f)
+        g = XMLGenerator(f)
         g.startElementNS((None, 'foo'), None, {})
         g.ignorableWhitespace(' ')
         g.endElementNS((None, 'foo'), None)
@@ -50,7 +50,7 @@ class TestCase(unittest.TestCase):
 
     def test_notclose_processingInstruction(self):
         f = StringIO()
-        g = StableXMLGenerator(f)
+        g = XMLGenerator(f)
         g.startElementNS((None, 'foo'), None, {})
         g.processingInstruction('bar', 'baz')
         g.endElementNS((None, 'foo'), None)
@@ -59,7 +59,7 @@ class TestCase(unittest.TestCase):
 
     def test_notclose_element(self):
         f = StringIO()
-        g = StableXMLGenerator(f)
+        g = XMLGenerator(f)
         g.startElementNS((None, 'foo'), None, {})
         g.startElementNS((None, 'bar'), None, {})
         g.endElementNS((None, 'bar'), None)
@@ -69,7 +69,7 @@ class TestCase(unittest.TestCase):
 
     def test_notclose_element2(self):
         f = StringIO()
-        g = StableXMLGenerator(f)
+        g = XMLGenerator(f)
         g.startElementNS((None, 'foo'), None, {})
         g.startElementNS((None, 'bar'), None, {})
         g.characters('text')
@@ -80,7 +80,7 @@ class TestCase(unittest.TestCase):
 
     def test_namespace_close(self):
         f = StringIO()
-        g = StableXMLGenerator(f)
+        g = XMLGenerator(f)
         uri = 'http://ns.infrae.com/test'
         g.startPrefixMapping('test', uri)
         g.startElementNS((uri, 'foo'), None, {})
@@ -92,7 +92,7 @@ class TestCase(unittest.TestCase):
 
     def test_attr_sorting(self):
         f = StringIO()
-        g = StableXMLGenerator(f)
+        g = XMLGenerator(f)
         d = {
             (None, 'a'): 'A',
             (None, 'b'): 'B',
@@ -104,6 +104,37 @@ class TestCase(unittest.TestCase):
         out = f.getvalue()
         self.assertEquals('<foo a="A" b="B" c="C" d="D"/>', out)
         
+    def test_attr_sorting2(self):
+        f = StringIO()
+        g = XMLGenerator(f)
+        
+        d = {
+            'name03':'Clara01',
+            'name09':'Clara02',
+            'name04':'Clara03',
+            'name06':'Clara04',
+            'name01':'Clara05',
+            'name05':'Clara06',
+            'name08':'Clara07',
+            'name02':'Clara08',
+            'name10':'Clara09',
+            'name07':'Clara10',
+            }
+
+        nd = {}
+        for key, value in d.items():
+            nd[(None, key)] = value
+        d = nd
+        g.startDocument()
+        g.startElementNS((None, 'moo'), None, d)
+        g.endElementNS((None, 'moo'), None)
+        g.endDocument()
+        out = f.getvalue()
+        
+        self.assertEquals(
+            '<?xml version="1.0" encoding="UTF-8"?>\n<moo name01="Clara05" name02="Clara08" name03="Clara01" name04="Clara03" name05="Clara06" name06="Clara04" name07="Clara10" name08="Clara07" name09="Clara02" name10="Clara09"/>',
+            out)
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(TestCase)])
@@ -111,4 +142,3 @@ def test_suite():
 
 if __name__ == '__main__':
     unittest.main()
-    
