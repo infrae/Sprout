@@ -7,12 +7,17 @@ from xml.sax import saxutils
 class XMLSourceRegistry:
     """Registers Content Types to XML Sources that generate Sax-events.
     """
-    def __init__(self):
+    def __init__(self, default_namespace):
         self._mapping = {}
         self._fallback = None
-    
+        self._default_namespace = default_namespace
+        self._namespaces = {}
+        
     def registerXMLSource(self, klass, xml_source):
         self._mapping[klass] = xml_source
+
+    def registerNamespace(self, prefix, uri):
+        self._namespaces[prefix] = uri
         
     def getXMLSource(self, context, reader, settings):
         class_ = context.__class__
@@ -29,41 +34,39 @@ class XMLSourceRegistry:
         return result
 
     def xmlToFile(self, file, context, settings=None):
-        reader = saxutils.XMLGenerator(file, 'UTF-8')
+        reader = saxutils.XMLGenerator(file, 'utf-8')
         self.xmlToSax(context, reader, settings)
 
     def xmlToSax(self, context, reader, settings=None):
-        self.getXMLSource(context, reader, settings).xmlToSax()
+        reader.startDocument()
+        reader.startPrefixMapping(None, self._default_namespace)
+        for prefix, uri in self._namespaces.items():
+            reader.startPrefixMapping(prefix, uri)
+        self.getXMLSource(context, reader, settings).sax()
+        reader.endDocument()
+        
+    def getDefaultNamespace(self):
+        return self._default_namespace
     
 class BaseXMLSource:
     def __init__(self, context, registry, reader, settings):
         self.context = context
         self._registry = registry
-        self._reader = reader
+        self.reader = reader
         self._settings = settings
         
-    def xmlToSax(self):
-        """Export self.context to XML Sax-events 
-        """
-        self._reader.startPrefixMapping(None, self.ns_default)
-        if self._settings is not None:
-            mappings = self._settings.getMappings()
-            for prefix in mappings.keys():
-                self._reader.startPrefixMapping(prefix, mappings[prefix])
-        self._sax()
-
     def getXMLSource(self, context):
         """Give the XML source for a particular context object.
         """
         return self._registry.getXMLSource(
-            context, self._reader, self._settings)
+            context, self.reader, self._settings)
     
-    def _sax(self):
+    def sax(self):
         """To be overridden in subclasses
         """
         raise NotImplemented
 
-    def _startElementNS(self, ns, name, attrs=None):
+    def startElementNS(self, ns, name, attrs=None):
         """Starts a named XML element in the provided namespace with
         optional attributes
         """
@@ -77,25 +80,28 @@ class BaseXMLSource:
                 else:
                     d[(None, key)] = value
 
-        self._reader.startElementNS(
+        self.reader.startElementNS(
             (ns, name),
             None,
             d)
         
-    def _endElementNS(self, ns, name):
+    def endElementNS(self, ns, name):
         """Ends a named element in the provided namespace
         """
-        self._reader.endElementNS(
+        self.reader.endElementNS(
             (ns, name),
             None)
-        
-    def _startElement(self, name, attrs=None):
+
+    def getDefaultNamespace(self):
+        return self._registry.getDefaultNamespace()
+    
+    def startElement(self, name, attrs=None):
         """Starts a named XML element in the default namespace with optional
         attributes
         """
-        self._startElementNS(self.ns_default, name, attrs)
+        self.startElementNS(self.getDefaultNamespace(), name, attrs)
         
-    def _endElement(self, name):
+    def endElement(self, name):
         """Ends a named element in the default namespace
         """
-        self._endElementNS(self.ns_default, name)
+        self.endElementNS(self.getDefaultNamespace(), name)
