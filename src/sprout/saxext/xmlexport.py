@@ -26,6 +26,12 @@ class BaseSettings:
         """
         return self._outputEncoding
 
+class BaseData:
+    """Base class of data that can be set or changed by the export.
+    
+    Subclass this for custom data objects.
+    """
+    
 # null settings contains the default settings
 NULL_SETTINGS = BaseSettings()
 
@@ -62,7 +68,7 @@ class Exporter:
 
     # ACCESSORS
 
-    def exportToSax(self, obj, handler, settings=NULL_SETTINGS):
+    def exportToSax(self, obj, handler, settings=NULL_SETTINGS, data=None):
         """Export to sax events on handler.
         
         obj - the object to convert to XML
@@ -75,11 +81,11 @@ class Exporter:
             handler.startPrefixMapping(None, self._default_namespace)
         for prefix, uri in self._namespaces.items():
             handler.startPrefixMapping(prefix, uri)
-        self._getProducer(obj, handler, settings).sax()
+        self._getProducer(obj, handler, settings, data).sax()
         if settings.asDocument():
             handler.endDocument()
 
-    def exportToFile(self, obj, file, settings=NULL_SETTINGS):
+    def exportToFile(self, obj, file, settings=NULL_SETTINGS, data=None):
         """Export object by writing XML to file object.
 
         obj - the object to convert to XML
@@ -87,9 +93,9 @@ class Exporter:
         settings - optionally a settings object to configure export
         """
         handler = self._generator(file, settings.outputEncoding())
-        self.exportToSax(obj, handler, settings)
+        self.exportToSax(obj, handler, settings, data)
 
-    def exportToString(self, obj, settings=NULL_SETTINGS):
+    def exportToString(self, obj, settings=NULL_SETTINGS, data=None):
         """Export object as XML string.
 
         obj - the object to convert to XML
@@ -98,7 +104,7 @@ class Exporter:
         Returns XML string.
         """
         f = StringIO()
-        self.exportToFile(obj, f, settings)
+        self.exportToFile(obj, f, settings, data)
         result = f.getvalue()
         f.close()
         return result
@@ -110,7 +116,7 @@ class Exporter:
 
     # PRIVATE
 
-    def _getProducer(self, context, handler, settings):
+    def _getProducer(self, context, handler, settings, data):
         """Create SAX event producer for context, handler, settings.
 
         context - the object to represent as XML
@@ -122,7 +128,7 @@ class Exporter:
         if producer_factory is None:
             raise XMLExportError, ("Cannot find SAX event producer for: %s" %
                                    class_)
-        return producer_factory(context, self, handler, settings)
+        return producer_factory(context, self, handler, settings, data)
 
 class BaseProducer:
     """Base class for SAX event producers.
@@ -143,11 +149,12 @@ class BaseProducer:
     getProducer - to retrieve a producer for a sub object.
     subsax - to generate SAX events for a sub object
     """
-    def __init__(self, context, exporter, handler, settings):
+    def __init__(self, context, exporter, handler, settings, data):
         self.context = context
         self._exporter = exporter
         self.handler = handler
         self._settings = settings
+        self._export_data = data
         
     def sax(self):
         """To be overridden in subclasses
@@ -203,7 +210,7 @@ class BaseProducer:
         context - the context object to get producer for.
         """
         return self._exporter._getProducer(
-            context, self.handler, self._settings)
+            context, self.handler, self._settings, self._export_data)
 
     def subsax(self, context):
         """Generate SAX events for context object.
