@@ -38,7 +38,6 @@ class XMLOverridableElementRegistry:
             self._popOverride(element)
             
     def getXMLElementHandler(self, element):
-        print "requesting handler for element: %s" % repr(element)
         try:
             return self._mapping[element][-1]
         except KeyError:
