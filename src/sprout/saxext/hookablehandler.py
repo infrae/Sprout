@@ -29,29 +29,6 @@ class HookableHandler:
     def __init__(self, output_handler):
         self._output_handler = output_handler
  
-    def setHook(self, method_name, function):
-        """Set a hook function to a particular method.
-
-        Gets executed before method is executed, with parameters of
-        method. If this returns something, this is assumed to be the
-        processed parameters of what the method will receive.
-
-        Can be used to preprocess parameters.
-        """
-        self._hooks[method_name] = function
-
-    def setSimpleHook(self, method_name, function):
-        """Set a hook function for a particular method.
-
-        Hook gets no parameters and returns nothing.
-        """
-        self._simple_hooks[method_name] = function
-
-    def setOverride(self, method_name, function):
-        """Instead of doing normal behavior, call function instead.
-        """
-        self._overrides[method_name] = function
-
     def _hookedExecute(self, method_name, *args, **kw):
         simple = getattr(self, method_name + '_simple', None)
         if simple is not None:
