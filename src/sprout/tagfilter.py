@@ -1,0 +1,120 @@
+import re, sets
+from sprout.blockedrange import Ranges
+
+start_tag_re = re.compile(r"""
+  <[a-zA-Z][-.a-zA-Z0-9:_]*          # tag name
+  (?:\s+                             # whitespace before attribute name
+    (?:[a-zA-Z_][-.:a-zA-Z0-9_]*     # attribute name
+      (?:\s*=\s*                     # value indicator
+        (?:'[^']*'                   # LITA-enclosed value
+          |\"[^\"]*\"                # LIT-enclosed value
+          |[^'\">\s]+                # bare value
+         )
+       )?
+     )
+   )*
+  \s*                                # trailing whitespace
+  >
+""", re.VERBOSE)
+
+tagfind = re.compile('[a-zA-Z][-.a-zA-Z0-9:_]*')
+attrfind = re.compile(
+    r'\s*([a-zA-Z_][-.:a-zA-Z_0-9]*)(\s*=\s*'
+    r'(\'[^\']*\'|"[^"]*"|[-a-zA-Z0-9./,:;+*%?!&$\(\)_#=~]*))?')
+
+class TagFilter:
+    """Can filter XMLish text escaping any tags that are not known.
+
+    This is definitely *not* a normal way to treat XML, but may be useful
+    to clean up messy user input with mistakes, such as HTML.
+    
+    This right now only supports open tags and closing tags.
+    """
+    
+    def __init__(self):
+        self._elements = {}
+        
+    def registerElement(self, name, attribute_names=None):
+        attribute_names = attribute_names or []
+        self._elements[name] = sets.Set(attribute_names)
+
+    def getElementNames(self):
+        return self._elements.keys()
+    
+    def findNonElements(self, s):
+        """Given a string, find returns a Ranges object.
+
+        Ranges that are valid tags will be blocked.
+        """
+        b = Ranges(0, len(s))
+        for name, attrnames in self._elements.items():
+            # block all start tags
+            q = re.compile('<%s' % name, re.IGNORECASE | re.MULTILINE)
+            i = 0
+            while 1:
+                m = q.search(s, i)
+                if m is None:
+                    break
+                index = m.start()
+                i = m.end()
+                # find end of pattern and block range for it
+                m = start_tag_re.match(s, index)
+                if m is not None:
+                    # but only if attributes are the same
+                    text_attrnames = sets.Set(
+                        self.attribute_names(s, m.start(), m.end()))
+                    if attrnames == text_attrnames:
+                        b.block(m.start(), m.end())
+            # block all end tags
+            q = re.compile('</%s>' % name, re.IGNORECASE | re.MULTILINE)
+            i = 0
+            while 1:
+                m = q.search(s, i)
+                if m is None:
+                    break
+                index = m.start()
+                i = m.end()
+                b.block(index, i)
+                
+        return b
+
+    def escapeNonElements(self, text):
+        result = []
+        b = self.findNonElements(text)
+        for s, e, open in b.getRanges():
+            subs = text[s:e]
+            if open:
+                subs = subs.replace('<', '&lt;')
+                subs = subs.replace('>', '&gt;')
+            result.append(subs)
+        return ''.join(result)
+
+    def attribute_names(self, rawdata, i, j):
+        result = []
+        match = tagfind.match(rawdata, i + 1)
+        k = match.end()
+        
+        while k < j:
+            m = attrfind.match(rawdata, k)
+            if not m:
+                break
+            attrname = m.group(1) #, rest, attrvalue = m.group(1, 2, 3)
+            #if not rest:
+            #    attrvalue = None
+            #elif (attrvalue[0] == "'" == attrvalue[-1] or
+            #      attrvalue[0] == '"' == attrvalue[-1]):
+            #    attrvalue = attrvalue[1:-1]
+            #    attrvalue = self.unescape(attrvalue)
+            result.append(attrname.lower())
+            k = m.end()
+        return result
+    
+    def unescape(self, s):
+        if '&' not in s:
+            return s
+        s = s.replace("&lt;", "<")
+        s = s.replace("&gt;", ">")
+        s = s.replace("&apos;", "'")
+        s = s.replace("&quot;", '"')
+        s = s.replace("&amp;", "&") # Must be last
+        return s
