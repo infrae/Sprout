@@ -56,6 +56,14 @@ MARKUP_TEXT_BR = MARKUP_TEXT + ['br']
 MARKUP = MARKUP_TEXT_BR + MARKUP_LINK
 MARKUP_HEADING = MARKUP_BASE + MARKUP_LINK
 
+MARKUP_TEXT_TRANSLATION = {
+    'i': 'em',
+    'sup': 'super',
+    'sub': 'sub',
+    'b': 'strong',    
+    'u' : 'underline',
+    }
+
 class BlockHandler(xmlimport.BaseHandler):
     def characters(self, data):
         node = self.parent()
@@ -76,23 +84,8 @@ class MarkupTextHandler(xmlimport.BaseHandler):
 def markupTextHandlerClass(name):
     """Construct subclass able to handle element of name.
     """
-    return type('%s_handler_class' % self.name, (MarkupTextHandler,),
-                {'name': self.name})
-        
-class IHandler(MarkupBaseHandler):
-    name = 'em'
-
-class BHandler(MarkupBaseHandler):
-    name = 'strong'
-
-class SupHandler(MarkupBaseHandler):
-    name = 'super'
-
-class SubHandler(MarkupBaseHandler):
-    name = 'sub'
-
-class UHandler(MarkupBaseHandler):
-    name = 'underline'
+    return type('%s_handler_class' % name, (MarkupTextHandler,),
+                {'name': name})
 
 class SubsetHandler(xmlimport.BaseHandler):
     """A handler that ignores any elements not in subset.
@@ -125,11 +118,8 @@ class IndexHandler(xmlimport.BaseHandler):
         node.setAttribute('name', data)
 
 class BrHandler(xmlimport.BaseHandler):
-    def getOverrides(self):
-        result = {}
-        for name in MARKUP:
-            result[(None, name)] = IgnoreHandler
-        return result
+    def isElementAllowed(self, name):
+        return False
     
     def startElementNS(self, name, qname, attrs):
         node = self.parent()
@@ -137,15 +127,9 @@ class BrHandler(xmlimport.BaseHandler):
         node.appendChild(child)
         self.setResult(child)
 
-class IgnoreHandler(xmlimport.BaseHandler):
-    """Completely ignores any event.
-
-    Used to suppress input from subtags which we don't want.
-    """
-    pass
 
 def parse(html, importer, result):
-    handler = importer.importHandler(xmlimport.NULL_SETTINGS, result)
+    handler = importer.importHandler(xmlimport.IGNORE_SETTINGS, result)
     # any text has to between tags
     collapsing_handler = collapser.CollapsingHandler(handler)
     collapsing_handler.startElementNS((None, 'block'), None, {})
@@ -157,9 +141,9 @@ def createImporter():
     # XXX 'block' tag is only needed to provide fake element events
     # XXX but it could be misused in the text now..
     d = {(None, 'block'): BlockHandler}
-    for name in MARKUP_TEXT:
-        d[(None, name)] = markupTextHandlerClass(name)
+    for parsed_name, tree_name in MARKUP_TEXT_TRANSLATION.items():
+        d[(None, parsed_name)] = markupTextHandlerClass(tree_name)
     d[(None, 'a')] = AHandler
     d[(None, 'index')] = IndexHandler
-    d[(None, 'br') = BrHandler
-    return d
+    d[(None, 'br')] = BrHandler
+    return xmlimport.Importer(d)

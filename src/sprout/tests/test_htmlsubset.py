@@ -1,16 +1,15 @@
 # -*- coding: UTF-8 -*-
 import unittest
-import parser
-from sprout.picodom import Document
+from sprout import htmlsubset
+from sprout.picodom import getDOMImplementation
 
-class ParserTestCase(unittest.TestCase):
+class SubsetTestCase(unittest.TestCase):
     def setUp(self):
-        self._importer = parser.createImporter()
+        self._importer = htmlsubset.createImporter()
     
     def parse(self, text):        
-        document = Document()
-        document.documentElement = document.createElement('p')
-        p = parser.parse(text, self._importer, document.documentElement)
+        document = getDOMImplementation().createDocument(None, 'p')
+        p = htmlsubset.parse(text, self._importer, document.documentElement)
         return p.toXML()
     
     def test_simple_em(self):
@@ -75,9 +74,11 @@ class ParserTestCase(unittest.TestCase):
             '<p>Foo<br></br>Bar</p>',
             self.parse('Foo<br><i>Hoi<b>Baz</b></i></br>Bar'))
 
-# XXX these tests are currently not yet activated
 def test_suite():
-     pass
+    suite = unittest.TestSuite()
+    for testcase in [SubsetTestCase]:
+        suite.addTest(unittest.makeSuite(testcase))
+    return suite
 
 if __name__ == '__main__':
     unittest.main()
