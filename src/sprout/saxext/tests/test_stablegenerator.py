@@ -135,6 +135,20 @@ class TestCase(unittest.TestCase):
             '<?xml version="1.0" encoding="UTF-8"?>\n<moo name01="Clara05" name02="Clara08" name03="Clara01" name04="Clara03" name05="Clara06" name06="Clara04" name07="Clara10" name08="Clara07" name09="Clara02" name10="Clara09"/>',
             out)
 
+    def test_unicode(self):
+        f = StringIO()
+        g = XMLGenerator(f, encoding=None)
+
+        g.startDocument()
+        g.startElementNS((None, 'foo'), None, {})
+        g.characters(u'Text')
+        g.endElementNS((None, 'foo'), None)
+        g.endDocument()
+        
+        out = f.getvalue()
+        self.assertEquals('<?xml version="1.0"?>\n<foo>Text</foo>', out)
+        self.assert_(isinstance(out, unicode))
+        
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(TestCase)])

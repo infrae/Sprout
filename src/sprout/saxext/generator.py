@@ -34,7 +34,8 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
     def __init__(self, out, encoding="UTF-8"):
         xml.sax.handler.ContentHandler.__init__(self)
         if encoding is not None:
-            self._out = _outputwrapper(out, encoding)
+            out = _outputwrapper(out, encoding)
+        self._out = out
         self._ns_contexts = [{}] # contains uri -> prefix dicts
         self._current_context = self._ns_contexts[-1]
         self._undeclared_ns_maps = []
@@ -50,9 +51,12 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
     # ContentHandler methods
 
     def startDocument(self):
-        self._out.write('<?xml version="1.0" encoding="%s"?>\n' %
-                        self._encoding)
-
+        if self._encoding is not None:
+            self._out.write('<?xml version="1.0" encoding="%s"?>\n' %
+                            self._encoding)
+        else:
+            self._out.write('<?xml version="1.0"?>\n')
+            
     def startPrefixMapping(self, prefix, uri):
         self._ns_contexts.append(self._current_context.copy())
         self._current_context[uri] = prefix
@@ -63,10 +67,12 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
         del self._ns_contexts[-1]
 
     def startElement(self, name, attrs):
-        raise NotSupportedError, "XMLGenerator does not support non-namespace SAX events."
+        raise NotSupportedError,\
+              "XMLGenerator does not support non-namespace SAX events."
     
     def endElement(self, name):
-        raise NotSupportedError, "XMLGenerator does not support non-namespace SAX events."
+        raise NotSupportedError,\
+              "XMLGenerator does not support non-namespace SAX events."
 
     def startElementNS(self, name, qname, attrs):
         self._processLast()
