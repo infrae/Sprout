@@ -12,11 +12,13 @@ from StringIO import StringIO
 class XMLImportError(Exception):
     pass
 
-class XMLOverridableElementRegistry:
+class ElementRegistry:
     """An element registry which can be overridden while handling events.
     """
-    def __init__(self):
+    def __init__(self, handler_map=None):
         self._mapping = {}
+        if handler_map is not None:
+            self.addHandlerMap(handler_map)
         self._stack = []
 
     # MANIPULATORS

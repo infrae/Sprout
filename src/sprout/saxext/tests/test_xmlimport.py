@@ -82,8 +82,7 @@ class SubBetaHandler(xmlimport.BaseHandler):
 
 class XMLImportTestCase(unittest.TestCase):
     def setUp(self):
-        self._registry = registry = xmlimport.XMLOverridableElementRegistry()
-        registry.addHandlerMap({
+        self._registry = xmlimport.ElementRegistry({
             (None, 'alpha'): AlphaHandler,
             (None, 'beta') : BetaHandler,
             (None, 'gamma') : GammaHandler,
