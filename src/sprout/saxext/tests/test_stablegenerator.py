@@ -148,6 +148,45 @@ class TestCase(unittest.TestCase):
         out = f.getvalue()
         self.assertEquals('<?xml version="1.0"?>\n<foo>Text</foo>', out)
         self.assert_(isinstance(out, unicode))
+
+    def test_namespace(self):
+        f = StringIO()
+        g = XMLGenerator(f)
+        uri = 'http://www.test.com/ns'
+        g.startPrefixMapping('ns', uri)
+        g.startElementNS((uri, 'foo'), None, {})
+        g.endElementNS((uri, 'foo'), None)
+        g.endPrefixMapping('ns')
+        self.assertEquals('<ns:foo xmlns:ns="http://www.test.com/ns"/>',
+                          f.getvalue())
+
+    def test_default_namespace(self):
+        f = StringIO()
+        g = XMLGenerator(f)
+        uri = 'http://www.test.com/ns'
+        g.startPrefixMapping(None, uri)
+        g.startElementNS((uri, 'foo'), None, {})
+        g.endElementNS((uri, 'foo'), None)
+        g.endPrefixMapping(None)
+        self.assertEquals('<foo xmlns="http://www.test.com/ns"/>',
+                          f.getvalue())
+
+    def test_unknown_namespace(self):
+        f = StringIO()
+        g = XMLGenerator(f)
+        uri ='http://www.test.com/ns'
+        self.assertRaises(KeyError, g.startElementNS, (uri, 'foo'), None, {})
+
+    def test_unknown_attr_namespace(self):
+        f = StringIO()
+        g = XMLGenerator(f)
+        uri = 'http://www.test.com/ns'
+        attrs = {
+            (uri, 'bar') : 'Baz',
+            }
+        g.startPrefixMapping(None, uri)
+        self.assertRaises(KeyError, g.startElementNS, (None, 'foo'), None,
+                          attrs)
         
 def test_suite():
     suite = unittest.TestSuite()

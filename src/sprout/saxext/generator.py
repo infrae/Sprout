@@ -9,9 +9,9 @@ class NotSupportedError(Exception):
 class XMLGenerator(xml.sax.handler.ContentHandler):
     """Updated version of XMLGenerator from xml.sax.saxutils.
 
-    This takes the PyXML version (the default Python version is buggy
-    in Python 2.3).
-
+    This takes the SAX parser in Python and improves it (with some hints
+    from the PyXML version as well).
+    
     Differences:
     
     Producing a unicode stream is now possible, if encoding argument is
@@ -19,7 +19,8 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
 
     No defaulting to sys.stdout; output stream must always be provided.
     
-    Classic non-namespace events are not handled to avoid confusion.
+    Classic non-namespace events are not handled but raise error
+    to avoid confusion.
 
     Refactoring to more cleanly support StableXMLGenerator.
 
@@ -29,8 +30,7 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
     
     Code has been cleaned up.
     """
-    GENERATED_PREFIX = "sprout.saxext.generator%s"
-
+    
     def __init__(self, out, encoding="UTF-8"):
         xml.sax.handler.ContentHandler.__init__(self)
         if encoding is not None:
@@ -40,7 +40,6 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
         self._current_context = self._ns_contexts[-1]
         self._undeclared_ns_maps = []
         self._encoding = encoding
-        self._generated_prefix_ctr = 0
         self._last_start_element = None
 
     def _processLast(self):
@@ -75,18 +74,48 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
               "XMLGenerator does not support non-namespace SAX events."
 
     def startElementNS(self, name, qname, attrs):
-        self._processLast()
-        self._last_start_element = (name, qname, attrs)
+        """Start element.
 
-    def _startElementNSHelper(self, name, qname, attrs, close=False):
-        if name[0] is None:
-            name = name[1]
-        elif self._current_context[name[0]] is None:
+        Note that qname is always ignored in favor of namespace lookup
+        in the name tuple.
+        """
+        self._processLast()
+
+        # handle as much as possible here so that errors are raised
+        # at the right spot, and not only at endElementNS()
+        
+        uri, localname = name
+        if uri is None:
+            qname = localname
+        elif self._current_context[uri] is None:
             # default namespace
-            name = name[1]
+            qname = localname
         else:
-            name = self._current_context[name[0]] + ":" + name[1]
-        self._out.write('<' + name)
+            qname = self._current_context[uri] + ":" + localname
+
+        # sorted to get predictability in output
+        names = attrs.keys()
+        names.sort()
+
+        attr_data = []
+        for name in names:
+            value = attrs[name]
+            uri, localname = name
+            if uri is None:
+                attr_qname = localname
+            else:
+                prefix = self._current_context[uri]
+                if prefix is None:
+                    raise KeyError, "Attribute in default namespace, "\
+                          "but no prefix declared."
+                # this gives a key error if attribute is in default namespace
+                attr_qname = self._current_context[uri] + ":" + localname
+            attr_data.append((attr_qname, value))
+
+        self._last_start_element = (qname, attr_data)
+
+    def _startElementNSHelper(self, qname, attr_data, close=False):
+        self._out.write('<' + qname)
 
         for k,v in self._undeclared_ns_maps:
             if k is None:
@@ -95,47 +124,33 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
                 self._out.write(' xmlns:%s="%s"' % (k,v))
         self._undeclared_ns_maps = []
 
-        # sorted to get predictability in output
-        names = attrs.keys()
-        names.sort()
-        
-        for name in names:
-            value = attrs[name]
-            if name[0] is None:
-                name = name[1]
-            elif self._current_context[name[0]] is None:
-                # default namespace
-                #If an attribute has a nsuri but not a prefix, we must
-                #create a prefix and add a nsdecl
-                prefix = self.GENERATED_PREFIX % self._generated_prefix_ctr
-                self._generated_prefix_ctr = self._generated_prefix_ctr + 1
-                name = prefix + ':' + name[1]
-                self._out.write(' xmlns:%s=%s' % (prefix, quoteattr(name[0])))
-                self._current_context[name[0]] = prefix
-            else:
-                name = self._current_context[name[0]] + ":" + name[1]
-            self._out.write(' %s=' % name)
+        for qname, value in attr_data:
+            self._out.write(' %s=' % qname)
             writeattr(self._out, value)
+    
         if close:
             self._out.write('/>')
         else:
             self._out.write('>')
 
     def endElementNS(self, name, qname):
+        """End element.
+
+        Note that namespace lookup is always ignored in favor of namespace
+        lookup in qname.
+        """
         if self._last_start_element is not None:
-            name, qname, attrs = self._last_start_element
-            self._startElementNSHelper(name, qname, attrs, True)
+            qname, attr_data = self._last_start_element
+            self._startElementNSHelper(qname, attr_data, True)
             self._last_start_element = None
             return
-        # XXX: if qname is not None, we better use it.
-        # Python 2.0b2 requires us to use the recorded prefix for
-        # name[0], though
-        if name[0] is None:
-            qname = name[1]
-        elif self._current_context[name[0]] is None:
-            qname = name[1]
+        uri, localname = name
+        if uri is None:
+            qname = localname
+        elif self._current_context[uri] is None:
+            qname = localname
         else:
-            qname = self._current_context[name[0]] + ":" + name[1]
+            qname = self._current_context[uri] + ":" + localname
         self._out.write('</%s>' % qname)
 
     def characters(self, content):
