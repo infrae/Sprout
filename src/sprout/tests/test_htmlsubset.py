@@ -144,6 +144,25 @@ class ParagraphSubsetTestCase(unittest.TestCase):
         self.assertEquals(
             '<p>Trivial</p>',
             self.filteredParse('Trivial'))
+
+    # multiline tests
+    def test_multiline(self):
+        text = '''\
+Foo
+Bar'''
+        
+        self.assertEquals(
+            '<p>Foo<br></br>Bar</p>',
+            self.filteredParse(text))
+
+    def test_multiline2(self):
+        text = '''\
+Foo
+Bar
+Baz'''
+        self.assertEquals(
+            '<p>Foo<br></br>Bar<br></br>Baz</p>',
+            self.filteredParse(text))
         
 class HeadingSubsetTestCase(unittest.TestCase):
     def setUp(self):
@@ -173,7 +192,7 @@ class HeadingSubsetTestCase(unittest.TestCase):
         self.assertEquals(
             '<heading>Foo&lt;b&gt;bold&lt;/b&gt;</heading>',
             self.filteredParse('Foo<b>bold</b>'))
-
+    
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [ParagraphSubsetTestCase, HeadingSubsetTestCase]:

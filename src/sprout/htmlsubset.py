@@ -37,7 +37,7 @@ class Subset:
         if element is None:
             return False
         return element.isAllowed(name)
-
+    
     def filteredParse(self, html, result):
         html = self._tagfilter.escapeNonElements(html)
         return self.parse(html, result)

@@ -21,8 +21,16 @@ MARKUP_TEXT_TRANSLATION = {
     'acronym' : 'acronym',
     }
 
+class SilvaParagraphSubset(htmlsubset.Subset):
+    """A subset consists of known elements.
+    """
+    def filteredParse(self, html, result):
+        html = html.replace('\r\n', '<br/>')
+        html = html.replace('\n', '<br/>')
+        return htmlsubset.Subset.filteredParse(self, html, result)
+        
 def createParagraphSubset():
-    subset = htmlsubset.Subset()
+    subset = SilvaParagraphSubset()
     for name in MARKUP_TEXT:
         handler = markupTextHandlerClass(name, MARKUP_TEXT_TRANSLATION[name])
         element = htmlsubset.Element(name, [], [], MARKUP_TEXT_BR, handler)
