@@ -12,6 +12,16 @@ from StringIO import StringIO
 class XMLImportError(Exception):
     pass
 
+class BaseSettings:
+    """Base class of settings sent to the handlers.
+
+    Subclass this for custom settings objects.
+    """
+    pass
+
+# null settings contains the default settings
+NULL_SETTINGS = BaseSettings()
+
 class Importer:
     """A SAX based importer.
     """
@@ -46,7 +56,7 @@ class Importer:
         """
         self._mapping[element] = [handler_factory]
             
-    def importHandler(self, settings=None, result=None, info=None):
+    def importHandler(self, settings=NULL_SETTINGS, result=None, info=None):
         """Get import handler.
 
         Useful when we are sending the SAX events directly, not from file.
@@ -60,7 +70,7 @@ class Importer:
         """
         return _SaxImportHandler(self, settings, result, info)
 
-    def importFromFile(self, f, settings=None, result=None, info=None):
+    def importFromFile(self, f, settings=NULL_SETTINGS, result=None, info=None):
         """Import from file object.
 
         f - file object
@@ -79,7 +89,7 @@ class Importer:
         parser.parse(f)
         return handler.result()
 
-    def importFromString(self, s, settings=None, result=None, info=None):
+    def importFromString(self, s, settings=NULL_SETTINGS, result=None, info=None):
         """Import from string.
 
         s - string with XML text
@@ -250,7 +260,7 @@ class BaseHandler:
 
     This should be subclassed to implement your own handlers. 
     """
-    def __init__(self, parent, parent_handler, settings=None, info=None):
+    def __init__(self, parent, parent_handler, settings=NULL_SETTINGS, info=None):
         """Initialize BaseHandler.
 
         parent - the parent object as being constructed in the import
