@@ -117,6 +117,8 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
     def _startElementNSHelper(self, qname, attr_data, close=False):
         self._out.write('<' + qname)
 
+        # sort namespace declarations; None prefix will be sorted to beginning
+        self._undeclared_ns_maps.sort()
         for k,v in self._undeclared_ns_maps:
             if k is None:
                 self._out.write(' xmlns="%s"' % (v or ''))

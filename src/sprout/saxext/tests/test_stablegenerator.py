@@ -90,6 +90,23 @@ class TestCase(unittest.TestCase):
         self.assertEquals('<test:foo xmlns:test="http://ns.infrae.com/test"/>',
                           out)
 
+    def test_namespace_sorting(self):
+        f = StringIO()
+        g = XMLGenerator(f)
+        uri_a = 'http://a'
+        uri_b = 'http://b'
+        uri_c = 'http://c'
+        g.startPrefixMapping('b', uri_b)
+        g.startPrefixMapping('a', uri_a)
+        g.startPrefixMapping('c', uri_c)
+        g.startPrefixMapping(None, 'http://n')
+        g.startElementNS((None, 'foo'), None, {})
+        g.endElementNS((None, 'foo'), None)
+        out = f.getvalue()
+        self.assertEquals(
+            '<foo xmlns="http://n" xmlns:a="http://a" xmlns:b="http://b" xmlns:c="http://c"/>',
+            out)
+                       
     def test_attr_sorting(self):
         f = StringIO()
         g = XMLGenerator(f)
