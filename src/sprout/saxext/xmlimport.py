@@ -155,7 +155,15 @@ class Importer:
         for element, handler in overrides.items():
             self._pushOverride(element, handler)
         self._stack.append(overrides.keys())
-      
+
+    def _pushOverridesAll(self, handler):
+        """Push special handler for all overrides.
+        """
+        keys = self._mapping.keys()
+        for element in keys:
+            self._pushOverride(element, handler)
+        self._stack.append(keys)
+        
     def _popOverrides(self):
         """Pop overrides.
 
@@ -201,11 +209,25 @@ class _SaxImportHandler(ContentHandler):
         pass    
 
     def startElementNS(self, name, qname, attrs):
+        parent_handler = self._handler_stack[-1]
+        if not parent_handler._checkElementAllowed(name):
+            # we're not allowed and ignoring the element and all subelements
+            self._importer._pushOverridesAll(IgnoringHandler)
+            self._handler_stack.append(IgnoringHandler(
+                parent_handler.result(),
+                parent_handler,
+                self._settings,
+                self._info))
+            self._depth_stack.append(self._depth)
+            self._depth += 1
+            return
+        # check whether we have a special handler
         factory = self._importer._getHandler(name)
         if factory is None:
-            handler = parent_handler = self._handler_stack[-1]
+            # no handler, use parent's handler
+            handler = parent_handler
         else:
-            parent_handler = self._handler_stack[-1]
+            # create new subhandler
             handler = factory(
                 parent_handler.result(),
                 parent_handler,
@@ -215,8 +237,8 @@ class _SaxImportHandler(ContentHandler):
             self._importer._pushOverrides(handler.getOverrides())
             self._handler_stack.append(handler)
             self._depth_stack.append(self._depth)
-        if parent_handler._checkElementAllowed(name):
-            handler.startElementNS(name, qname, attrs)
+        
+        handler.startElementNS(name, qname, attrs)    
         self._depth += 1
 
     def endElementNS(self, name, qname):
@@ -233,7 +255,7 @@ class _SaxImportHandler(ContentHandler):
     
         if parent_handler._checkElementAllowed(name):
             handler.endElementNS(name, qname)
-
+    
     def characters(self, chrs):
         handler = self._handler_stack[-1]
         if handler._checkTextAllowed(chrs):
@@ -409,7 +431,7 @@ class BaseHandler(object):
         return True
     
 class IgnoringHandler(BaseHandler):
-    """A handler that ignores any incoming events.
+    """A handler that ignores any incoming events that cannot be handled.
     """
     pass
 

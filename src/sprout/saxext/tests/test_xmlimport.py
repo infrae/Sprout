@@ -363,9 +363,44 @@ class NotAllowedTestCase(unittest.TestCase):
                                                   result=Container())
         self.assertEquals(0, len(result.children[0].children))
 
-    # XXX what should happen if an element is ignored and it contains
-    # subelements or text? Should those events be ignored too?
-    
+    def test_element_not_allowed_ignore2(self):
+        result = self._rimporter.importFromString('<a><c><b></b></c><b/></a>',
+                                                  settings=IGNORE_SETTINGS,
+                                                  result=Container())
+        self.assertEquals(1, len(result.children[0].children))
+        self.assertEquals(B, type(result.children[0].children[0]))
+
+    def test_structure(self):
+        result = self._importer.importFromString(
+            '<a><a><c/></a><b><c/></b></a>',
+            result=Container())
+        self.assertEquals(2, len(result.children[0].children))
+        # in a sub element we can find a c
+        self.assertEquals(1, len(result.children[0].children[0].children))
+        self.assertEquals(C, type(result.children[0].children[0].children[0]))
+        # in b sub element we can find a c
+        self.assertEquals(1, len(result.children[0].children[1].children))
+        self.assertEquals(C, type(result.children[0].children[1].children[0]))
+        
+    def test_element_not_allowed_ignore3(self):
+        result = self._rimporter.importFromString(
+            '<a><a><c/></a><b><c/></b></a>',
+            settings=IGNORE_SETTINGS,
+            result=Container())
+        self.assertEquals(2, len(result.children[0].children))
+        # in a sub element we can find nothing
+        self.assertEquals(0, len(result.children[0].children[0].children))
+        # in b sub element we can find a c
+        self.assertEquals(1, len(result.children[0].children[1].children))
+        self.assertEquals(C, type(result.children[0].children[1].children[0]))
+
+    def test_element_not_allowed_ignore4(self):
+        result = self._rimporter.importFromString(
+            '<a><c><hoi/><dag/><a><b></b></a></c></a>',
+            settings=IGNORE_SETTINGS,
+            result=Container())
+        self.assertEquals(0, len(result.children[0].children))
+        
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [XMLImportTestCase, NoStartObjectImportTestCase,
