@@ -39,6 +39,22 @@ def createParagraphSubset():
                            htmlsubset.BlockHandler))
     return subset
 
+def createHeadingSubset():
+    subset = htmlsubset.Subset()
+    for name in MARKUP_BASE:
+        handler = markupTextHandlerClass(name, MARKUP_TEXT_TRANSLATION[name])
+        element = htmlsubset.Element(name, [], [], MARKUP_HEADING, handler)
+        subset.registerElement(element)
+    subset.registerElement(
+        htmlsubset.Element('a', ['href'], ['target'],
+                           MARKUP_BASE, AHandler))
+    subset.registerElement(
+        htmlsubset.Element('index', [], [], [], IndexHandler))
+    subset.registerElement(
+        htmlsubset.Element('block', [], [], MARKUP_HEADING,
+                           htmlsubset.BlockHandler))
+    return subset
+        
 class MarkupTextHandler(htmlsubset.SubsetHandler):
     def startElementNS(self, name, qname, attrs):
         node = self.parent()
@@ -103,3 +119,4 @@ class BrHandler(htmlsubset.SubsetHandler):
         self.setResult(child)
 
 PARAGRAPH_SUBSET = createParagraphSubset()
+HEADING_SUBSET = createHeadingSubset()

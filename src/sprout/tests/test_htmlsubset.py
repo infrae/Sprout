@@ -3,7 +3,7 @@ import unittest
 from sprout import htmlsubset, silvasubset
 from sprout.picodom import getDOMImplementation
 
-class SubsetTestCase(unittest.TestCase):
+class ParagraphSubsetTestCase(unittest.TestCase):
     def setUp(self):
         self._subset = silvasubset.createParagraphSubset()
         
@@ -139,10 +139,44 @@ class SubsetTestCase(unittest.TestCase):
         self.assertEquals(
             '<p><link target="Bar" url="Foo">Test</link></p>',
             self.filteredParse('<a href="Foo" target="Bar">Test</a>'))
+
+    def test_trivial_filtered(self):
+        self.assertEquals(
+            '<p>Trivial</p>',
+            self.filteredParse('Trivial'))
         
+class HeadingSubsetTestCase(unittest.TestCase):
+    def setUp(self):
+        self._subset = silvasubset.createHeadingSubset()
+        
+    def parse(self, text):        
+        document = getDOMImplementation().createDocument(None, 'heading')
+        p = self._subset.parse(text, document.documentElement)
+        return p.toXML()
+
+    def filteredParse(self, text):
+        document = getDOMImplementation().createDocument(None, 'heading')
+        p = self._subset.filteredParse(text, document.documentElement)
+        return p.toXML()
+    
+    def test_heading1(self):
+        self.assertEquals(
+            '<heading>Foo</heading>',
+            self.filteredParse('Foo'))
+
+    def test_heading_bold_not_allowed(self):
+        self.assertEquals(
+            '<heading>Foo</heading>',
+            self.parse('Foo<b>bold</b>'))
+
+    def test_heading_bold_not_allowed_filtered(self):
+        self.assertEquals(
+            '<heading>Foo&lt;b&gt;bold&lt;/b&gt;</heading>',
+            self.filteredParse('Foo<b>bold</b>'))
+
 def test_suite():
     suite = unittest.TestSuite()
-    for testcase in [SubsetTestCase]:
+    for testcase in [ParagraphSubsetTestCase, HeadingSubsetTestCase]:
         suite.addTest(unittest.makeSuite(testcase))
     return suite
 
