@@ -26,7 +26,8 @@ def createParagraphSubset():
         element = htmlsubset.Element(name, [], [], MARKUP_TEXT_BR, handler)
         subset.registerElement(element)
     subset.registerElement(
-        htmlsubset.Element('a', ['href'], [], MARKUP_TEXT_BR, AHandler))
+        htmlsubset.Element('a', ['href'], ['target'],
+                           MARKUP_TEXT_BR, AHandler))
     subset.registerElement(
         htmlsubset.Element('index', [], [], [], IndexHandler))
     subset.registerElement(
@@ -62,6 +63,8 @@ class AHandler(htmlsubset.SubsetHandler):
         node = self.parent()
         child = node.ownerDocument.createElement('link')
         child.setAttribute('url', attrs[(None, 'href')])
+        if attrs.has_key((None, 'target')):
+            child.setAttribute('target', attrs[(None, 'target')])
         node.appendChild(child)
         self.setResult(child)
 

@@ -130,11 +130,16 @@ class SubsetTestCase(unittest.TestCase):
             '<p>Hoi<br></br>Dag</p>',
             self.filteredParse('Hoi<br/>Dag'))
 
-    def test_immediate_close_whitespace(self):
+    def test_immediate_close_whitespace_filtered(self):
         self.assertEquals(
             '<p>Hoi<link url="Foo"></link></p>',
             self.filteredParse('Hoi<a href="Foo" />'))
 
+    def test_target_filtered(self):
+        self.assertEquals(
+            '<p><link target="Bar" url="Foo">Test</link></p>',
+            self.filteredParse('<a href="Foo" target="Bar">Test</a>'))
+        
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [SubsetTestCase]:
