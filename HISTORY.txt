@@ -1,8 +1,11 @@
-under development
------------------
+0.6
+---
 
 * in Silva subset, accept nested <b>, <i> and <a href=""> in those.
 
+* Allow optional filtering handler that events get passed through before
+  import happens.
+ 
 0.5.1
 -----
 
