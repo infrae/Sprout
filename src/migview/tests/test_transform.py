@@ -336,6 +336,12 @@ InitializeClass(QuxAddView)
 
 def getViewsPath():
     return path(__file__).splitpath()[0] / 'views'
+
+def test_suite():
+    suite = unittest.TestSuite()
+    for testcase in [TestTransform, TestBrowserTree, TestBrowserSave]:
+        suite.addTest(unittest.makeSuite(testcase))
+    return suite
     
 if __name__ == '__main__':
     unittest.main()

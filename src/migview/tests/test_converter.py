@@ -394,7 +394,7 @@ InitializeClass(edit)
 def getViewsPath():
     return path(__file__).splitpath()[0] / 'views'
 
-def suite():
+def test_suite():
     s = unittest.makeSuite(TestConverter, 'test_')
     return s
 

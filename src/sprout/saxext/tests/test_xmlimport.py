@@ -230,7 +230,14 @@ class ImportExportTestCase(unittest.TestCase):
         # create XML for it so we can compare it
         second_xml = self._exporter.exportToString(new_tree)
         self.assertEquals(first_xml, second_xml)
-        
+
+def test_suite():
+    suite = unittest.TestSuite()
+    for testcase in [XMLImportTestCase, NoStartObjectImportTestCase,
+                     ImportExportTestCase]:
+        suite.addTest(unittest.makeSuite(testcase))
+    return suite
+
 if __name__ == '__main__':
     unittest.main()
     

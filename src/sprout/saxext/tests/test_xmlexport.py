@@ -86,7 +86,14 @@ class NoDefaultNamespaceTestCase(unittest.TestCase):
         self.assertEquals(
             '<?xml version="1.0" encoding="utf-8"?>\n<foo></foo>',
             self.exporter.exportToString(tree))
-        
+
+def test_suite():
+    suite = unittest.TestSuite()
+    for testcase in [XMLExportTestCase, XMLExportNamespaceTestCase,
+         NoDefaultNamespaceTestCase]:
+        suite.addTest(unittest.makeSuite(testcase))
+    return suite
+
 if __name__ == '__main__':
     unittest.main()
     
