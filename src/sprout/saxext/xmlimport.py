@@ -148,20 +148,21 @@ class BaseHandler:
         self._metadata_key = None
         self._metadata = {}
         self._settings = settings
-        
-    def getOverrides(self):
-        """Returns a dictionary of overridden handlers for xml elements. 
-        (The handlers override any registered handler for that element, but
-        getOverrides() can be used to 'override' tags that aren't
-        registered.)
-        """
-        return {}
 
+    # MANIPULATORS
+
+    def setResult(self, result):
+        """Sets the result data for this handler
+        """
+        self._result = result
+    
     def setData(self, key, value):
         """Many sub-elements with text-data use this to pass that data to
-        their parent (self._parent_handler.setData(foo, bar))
+        their parent (self.getParentHandler().setData(foo, bar))
         """
         self._data[key] = value
+
+    # ACCESSORS
 
     def getData(self, key):
         if self._data.has_key(key):
@@ -187,10 +188,7 @@ class BaseHandler:
         else:
             return self._parent
 
-    def setResult(self, result):
-        """Sets the result data for this handler
-        """
-        self._result = result
+    # OVERRIDES 
     
     def startElementNS(self, name, qname, attrs):
         pass
@@ -200,6 +198,14 @@ class BaseHandler:
 
     def characters(self, chrs):
         pass
+
+    def getOverrides(self):
+        """Returns a dictionary of overridden handlers for xml elements. 
+        (The handlers override any registered handler for that element, but
+        getOverrides() can be used to 'override' tags that aren't
+        registered.)
+        """
+        return {}
 
 def importFromString(s, registry, start_object, settings=None):
     """Import from string.
