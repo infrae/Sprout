@@ -264,10 +264,26 @@ class ImportExportTestCase(unittest.TestCase):
         second_xml = self._exporter.exportToString(new_tree)
         self.assertEquals(first_xml, second_xml)
 
+class SimpleCharactersHandler(xmlimport.BaseHandler):
+    def characters(self, data):
+        self.result().data = data
+
+class Dummy:
+    pass
+
+class DefaultHandlerTestCase(unittest.TestCase):
+    def setUp(self):
+        self._importer = xmlimport.Importer({}, SimpleCharactersHandler)
+            
+    def test_importFromString(self):
+        result = Dummy()
+        self._importer.importFromString('<p>foo</p>', result=result)
+        self.assertEquals(result.data, 'foo')
+        
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [XMLImportTestCase, NoStartObjectImportTestCase,
-                     ImportExportTestCase]:
+                     ImportExportTestCase, DefaultHandlerTestCase]:
         suite.addTest(unittest.makeSuite(testcase))
     return suite
 

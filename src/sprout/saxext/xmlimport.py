@@ -25,12 +25,13 @@ NULL_SETTINGS = BaseSettings()
 class Importer:
     """A SAX based importer.
     """
-    def __init__(self, handler_map=None):
+    def __init__(self, handler_map=None, default_handler=None):
         """Create an importer.
 
         The handler map is a mapping from element (ns, name) tuple to
         import handler, which is a subclass of BaseHandler.
         """
+        self._default_handler = default_handler
         self._mapping = {}
         if handler_map is not None:
             self.addHandlerMap(handler_map)
@@ -70,7 +71,8 @@ class Importer:
         """
         return _SaxImportHandler(self, settings, result, info)
 
-    def importFromFile(self, f, settings=NULL_SETTINGS, result=None, info=None):
+    def importFromFile(self, f, settings=NULL_SETTINGS,
+                       result=None, info=None):
         """Import from file object.
 
         f - file object
@@ -89,7 +91,8 @@ class Importer:
         parser.parse(f)
         return handler.result()
 
-    def importFromString(self, s, settings=NULL_SETTINGS, result=None, info=None):
+    def importFromString(self, s, settings=NULL_SETTINGS,
+                         result=None, info=None):
         """Import from string.
 
         s - string with XML text
@@ -126,7 +129,7 @@ class Importer:
         try:
             return self._mapping[element][-1]
         except KeyError:
-            return None
+            return self._default_handler
 
     def _pushOverrides(self, overrides):
         """Push override handlers onto stack.
