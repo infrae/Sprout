@@ -10,45 +10,51 @@ that case 'does its best' to produce a sane DOM tree.
 """
 
 from sprout.saxext import xmlimport, html2sax, collapser
+import sets
 
-class Subset:
-    def __init__(self):
-        pass
+class Element:
+    def __init__(self, name, required_attributes, optional_attributes,
+                 subelements):
+        self._name = name
+        self._required_attributes = required_attributes
+        self._optional_attributes = optional_attributes
+        self._subelements = sets.Set(subelements)
 
-    def registerElement(self, name, required_attributes, optional_attributes,
-                        text_allowed, subset):
-        """Register an element for a subset.
-
-        name - name of element
-        required_attributes - sequence with names of required attributes
-        optional_attributes - sequence with names of optional attributes
-        text_allowed - whether element is allowed to contain any text
-        subset - optional subset of elements that can be contained
-        """
-        pass
-
-    def filterTags(self, text):
-        """Given text, filter out unrecognized tags by quoting them literally.
-        """
-        
-    def getParseableElementNames(self):
-        """Get a list of all elements in this subset that can be parsed.
-
-        Any elements which cannot be parsed is quoted literally in the output.
-        """
-
-    def getIgnoreOverrides(self):
-        """Get an overrides dictionary with all elements that should be ignored.
-        """
-        result = {}
-        allowed_element_names = self.getParseableElementNames()
-        for name in self.getMainSubset().getParseableElementNames():
-            if name in allowed_element_names:
-                continue
-            result[(None, name)] = IgnoreHandler
-        return result
+    def getName(self):
+        return self._name
     
-        
+    def isAllowed(self, name):
+        return name in self._subelements
+
+def createTagFilter(elements):
+    tf = tagfilter.TagFilter(html_entities=True)
+    for element in elements:
+        tf.registerElement(
+            element.getName(),
+            element.getRequiredAttributes(),
+            element.getOptionalAttributes())
+    return tf
+
+def createParagraphImporter(elements):
+    
+
+    for parsed_name, tree_name in MARKUP_TEXT_TRANSLATION.items():
+        d[(None, parsed_name)] = markupTextHandlerClass(parsed_name, tree_name)
+    d[(None, 'a')] = AHandler
+    d[(None, 'index')] = IndexHandler
+    d[(None, 'br')] = BrHandler
+    return xmlimport.Importer(d)
+
+def getParagraphElements():
+    elements = []
+    for name in MARKUP_TEXT:
+        name = MARKUP_TEXT_TRANSLATION_REVERSED[name]
+        elements.append(Element(name, [], [], MARKUP_TEXT_BR_REVERSED))
+    elements.append(Element('a', ['href'], [], MARKUP_TEXT_BR_REVERSED))
+    elements.append(Element('index', [], [], []))
+    elements.append(Element('br', [], [], []))
+    return elements
+
 MARKUP_BASE = ['em', 'super', 'sub']
 MARKUP_LINK = ['link', 'index']
 MARKUP_TEXT = MARKUP_BASE + ['strong', 'underline']
@@ -64,16 +70,44 @@ MARKUP_TEXT_TRANSLATION = {
     'u' : 'underline',
     }
 
+MARKUP_TEXT_TRANSLATION_REVERSED = {}
+for key, value in MARKUP_TEXT_TRANSLATION.items():
+    MARKUP_TEXT_TRANSLATION_REVERSED[value] = key
+
+MARKUP_TEXT_BR_REVERSED = []
+for name in MARKUP_TEXT:
+    MARKUP_TEXT_BR_REVERSED.append(MARKUP_TEXT_TRANSLATION_REVERSED[name])
+
+class SubsetSettings(xmlimport.BaseSettings):
+    def __init__(self, elements):
+        super(SubsetSettings, self).__init__(ignore_not_allowed=True)
+        elements_dict = {}
+        for element in elements:
+            elements_dict[element.getName()] = element
+        self._elements = elements_dict
+
+    def isElementAllowed(self, name):
+        subset = self._elements.get(name)
+        if subset is None:
+            return False
+        return subset.isAllowed(name)
+    
 class BlockHandler(xmlimport.BaseHandler):
     def characters(self, data):
         node = self.parent()
         doc = node.ownerDocument
         node.appendChild(doc.createTextNode(data))
 
-class MarkupTextHandler(xmlimport.BaseHandler):
+class SubsetHandler(xmlimport.BaseHandler):
+    """A handler that ignores any elements not in subset.
+    """
+    def isElementAllowed(self, name):
+        return self.settings().isElementAllowed(name[1])
+    
+class MarkupTextHandler(SubsetHandler):
     def startElementNS(self, name, qname, attrs):
         node = self.parent()
-        child = node.ownerDocument.createElement(self.name)
+        child = node.ownerDocument.createElement(self.tree_name)
         node.appendChild(child)
         self.setResult(child)
         
@@ -81,18 +115,12 @@ class MarkupTextHandler(xmlimport.BaseHandler):
         node = self.result()
         node.appendChild(node.ownerDocument.createTextNode(data))
 
-def markupTextHandlerClass(name):
+def markupTextHandlerClass(parsed_name, tree_name):
     """Construct subclass able to handle element of name.
     """
-    return type('%s_handler_class' % name, (MarkupTextHandler,),
-                {'name': name})
+    return type('%s_handler_class' % parsed_name, (MarkupTextHandler,),
+                {'tree_name': tree_name, 'parsed_name': parsed_name})
 
-class SubsetHandler(xmlimport.BaseHandler):
-    """A handler that ignores any elements not in subset.
-    """
-    def getOverrides(self):
-        return self.settings().getSubset(self.tagName).getIgnoreOverrides()
-        
 class AHandler(xmlimport.BaseHandler):
     def isElementAllowed(self, name):
         try:
@@ -145,8 +173,8 @@ class BrHandler(xmlimport.BaseHandler):
 
 
 def parse(html, importer, result):
-    handler = importer.importHandler(xmlimport.IGNORE_SETTINGS, result)
-    # any text has to between tags
+    d = getParagraphElements()
+    handler = importer.importHandler(SubsetSettings(d), result)
     collapsing_handler = collapser.CollapsingHandler(handler)
     collapsing_handler.startElementNS((None, 'block'), None, {})
     html2sax.saxify(html, collapsing_handler)
@@ -158,8 +186,9 @@ def createImporter():
     # XXX but it could be misused in the text now..
     d = {(None, 'block'): BlockHandler}
     for parsed_name, tree_name in MARKUP_TEXT_TRANSLATION.items():
-        d[(None, parsed_name)] = markupTextHandlerClass(tree_name)
+        d[(None, parsed_name)] = markupTextHandlerClass(parsed_name, tree_name)
     d[(None, 'a')] = AHandler
     d[(None, 'index')] = IndexHandler
     d[(None, 'br')] = BrHandler
     return xmlimport.Importer(d)
+
