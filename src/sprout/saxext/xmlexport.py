@@ -4,6 +4,9 @@ An XML exporter based on SAX events.
 from StringIO import StringIO
 from xml.sax import saxutils
 
+class XMLExportError(Exception):
+    pass
+
 class BaseSettings:
     """Base class of settings sent to XML generation.
 

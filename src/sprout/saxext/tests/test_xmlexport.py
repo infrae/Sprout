@@ -1,6 +1,7 @@
 # test XML exporter
 import unittest
 from sprout.saxext import xmlexport
+from sprout.saxext.xmlexport import XMLExportError
 
 class Foo:
     def __init__(self, bars):
@@ -39,6 +40,10 @@ class XMLExportTestCase(unittest.TestCase):
         self.assertEquals(
             '<?xml version="1.0" encoding="utf-8"?>\n<foo xmlns="http://www.infrae.com/ns/test"><bar myattr="a">one</bar><bar myattr="b">two</bar></foo>',
             self.exporter.exportToString(tree))
+
+    def test_exceptions(self):
+        unsupported_type = 'not supported'
+        self.assertRaises(XMLExportError, self.exporter.exportToString, unsupported_type)
 
 class Baz:
     pass
