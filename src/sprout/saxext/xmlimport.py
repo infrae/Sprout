@@ -136,10 +136,12 @@ class BaseHandler:
     """Base class of all sub handlers.
     """
     def __init__(self, parent, parent_handler, settings=None):
-        # it is essential NOT to confuse self._parent and
-        # self._parent_handler. The is the parent object as it is being
-        # constructed from the import, the latter is the handler that is 
-        # handling the parent of the current handled element.
+        """Initialize BaseHandler.
+
+        parent - the parent object as being constructed in the import
+        parent_handler - the SAX handler constructing the parent object
+        settings - optional import settings object.
+        """
         self._parent = parent
         self._parent_handler = parent_handler
         self._result = None
