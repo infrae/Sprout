@@ -88,9 +88,8 @@ class XMLImportTestCase(unittest.TestCase):
             (None, 'gamma') : GammaHandler,
             (None, 'delta') : DeltaHandler
             })
-    
-    def test_import(self):
-        xml = '''\
+
+        self.xml = '''\
 <alpha>
    <beta>One</beta>
    <gamma value="Two" />
@@ -99,8 +98,10 @@ class XMLImportTestCase(unittest.TestCase):
    <delta attr="Five"><beta>Six</beta></delta>
 </alpha>
 '''
+
+    def test_import(self):
         result = Doc()
-        xmlimport.importFromString(xml, self._registry, result=result)
+        xmlimport.importFromString(self.xml, self._registry, result=result)
         self.assert_(result.getAlpha() is not None)
         self.assertEquals(5, len(result.getAlpha().getSub()))
         sub = result.getAlpha().getSub()
@@ -110,7 +111,15 @@ class XMLImportTestCase(unittest.TestCase):
         self.assertEquals('Four', sub[3].getValue())
         self.assertEquals('Five', sub[4].getValue())
         self.assertEquals('Six', sub[4].getExtra().getValue())
-
+        
+    def test_resultIsResult(self):
+        # check whether result from the function is the same as
+        # result we pass int
+        result = Doc()
+        call_result = xmlimport.importFromString(
+            self.xml, self._registry, result=result)
+        self.assertEquals(result, call_result)
+        
 class NoStartObjectAlphaHandler(xmlimport.BaseHandler):
     def startElementNS(self, name, qname, attrs):
         self.setResult(Alpha())

@@ -86,6 +86,7 @@ class _SaxImportHandler(ContentHandler):
         self._handler_stack = []
         self._depth_stack = []
         self._depth = 0
+        self._outer_result = result
         self._result = result
         self._settings = settings
         
@@ -128,7 +129,12 @@ class _SaxImportHandler(ContentHandler):
         handler.characters(chrs)
 
     def result(self):
-        return self._result
+        """Return result object of whole import.
+
+        If we passed in a result object, then this is always going to
+        be the one we need, otherwise get result of outer element.
+        """
+        return self._outer_result or self._result
     
 class BaseHandler:
     """Base class of all sub handlers.
