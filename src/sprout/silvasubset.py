@@ -6,7 +6,7 @@ from sprout.saxext import xmlimport
 
 MARKUP_BASE = ['i', 'sup', 'sub']
 MARKUP_LINK = ['a', 'index']
-MARKUP_TEXT = MARKUP_BASE + ['b', 'u']
+MARKUP_TEXT = MARKUP_BASE + ['b', 'u', 'abbr', 'acronym']
 MARKUP_TEXT_BR = MARKUP_TEXT + ['br']
 MARKUP = MARKUP_TEXT_BR + MARKUP_LINK
 MARKUP_HEADING = MARKUP_BASE + MARKUP_LINK
@@ -17,6 +17,8 @@ MARKUP_TEXT_TRANSLATION = {
     'sub': 'sub',
     'b': 'strong',    
     'u' : 'underline',
+    'abbr' : 'abbreviation',
+    'acronym' : 'acronym',
     }
 
 def createParagraphSubset():
@@ -28,6 +30,12 @@ def createParagraphSubset():
     subset.registerElement(
         htmlsubset.Element('a', ['href'], ['target'],
                            MARKUP_TEXT_BR, AHandler))
+    subset.registerElement(
+        htmlsubset.Element('abbr', [], ['title'],
+                           MARKUP_TEXT_BR, AbbrHandler))
+    subset.registerElement(
+        htmlsubset.Element('acronym', [], ['title'],
+                           MARKUP_TEXT_BR, AcronymHandler))
     subset.registerElement(
         htmlsubset.Element('index', [], [], [], IndexHandler))
     subset.registerElement(
@@ -81,6 +89,36 @@ class AHandler(htmlsubset.SubsetHandler):
         child.setAttribute('url', attrs[(None, 'href')])
         if attrs.has_key((None, 'target')):
             child.setAttribute('target', attrs[(None, 'target')])
+        node.appendChild(child)
+        self.setResult(child)
+
+    def characters(self, data):
+        node = self.result()
+        node.appendChild(node.ownerDocument.createTextNode(data))
+
+class AbbrHandler(htmlsubset.SubsetHandler):
+    parsed_name = 'abbr'
+
+    def startElementNS(self, name, qname, attrs):
+        node = self.parent()
+        child = node.ownerDocument.createElement('abbr')
+        if attrs.has_key((None, 'title')):
+            child.setAttribute('title', attrs[(None, 'title')])
+        node.appendChild(child)
+        self.setResult(child)
+
+    def characters(self, data):
+        node = self.result()
+        node.appendChild(node.ownerDocument.createTextNode(data))
+
+class AcronymHandler(htmlsubset.SubsetHandler):
+    parsed_name = 'acronym'
+
+    def startElementNS(self, name, qname, attrs):
+        node = self.parent()
+        child = node.ownerDocument.createElement('acronym')
+        if attrs.has_key((None, 'title')):
+            child.setAttribute('title', attrs[(None, 'title')])
         node.appendChild(child)
         self.setResult(child)
 
