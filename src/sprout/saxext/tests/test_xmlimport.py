@@ -279,11 +279,111 @@ class DefaultHandlerTestCase(unittest.TestCase):
         result = Dummy()
         self._importer.importFromString('<p>foo</p>', result=result)
         self.assertEquals(result.data, 'foo')
+
+class Container(object):
+    def __init__(self):
+        self.children = []
+        
+class A(object):
+    def __init__(self, name):
+        self.name = name
+        self.children = []
+
+class B(object):
+    def __init__(self):
+        self.children = []
+        self.text = []
+        
+class C(object):
+    def __init__(self):
+        self.children = []
+
+class AHandler(xmlimport.BaseHandler):
+    def startElementNS(self, name, qname, attrs):
+        a = A(name)
+        self.parent().children.append(a)
+        self.setResult(a)
+        
+class BHandler(xmlimport.BaseHandler):
+    def startElementNS(self, name, qname, attrs):
+        b = B()
+        self.parent().children.append(b)
+        self.setResult(b)
+        
+    def characters(self, chrs):
+        self.result().text.append(chrs)
+        
+class CHandler(xmlimport.BaseHandler):
+    def startElementNS(self, name, qname, attrs):
+        c = C()
+        self.parent().children.append(c)
+        self.setResult(c)
+        
+class RAHandler(AHandler):
+    def isElementAllowed(self, name):
+        return name[1] not in ('c', 'd')
+        
+class RBHandler(BHandler):
+    def isTextAllowed(self, chrs):
+        return chrs != 'foo'
+        
+class RCHandler(CHandler):
+    pass
+
+class IgnoreSettings(xmlimport.BaseSettings):
+    def ignoreNotAllowed(self):
+        return True
+
+IGNORE_SETTINGS = IgnoreSettings()
+
+class NotAllowedTestCase(unittest.TestCase):
+    def setUp(self):
+        self._importer = xmlimport.Importer({
+            (None, 'a'): AHandler,
+            (None, 'b'): BHandler,
+            (None, 'c'): CHandler,
+            })
+
+        self._rimporter = xmlimport.Importer({
+            (None, 'a'): RAHandler,
+            (None, 'b'): RBHandler,
+            (None, 'c'): RCHandler,
+            })
+        
+    def test_accepted(self):
+        result = self._importer.importFromString('<a><b><c>foo</c></b></a>',
+                                                 result=Container())
+        # should not raise an error
+        rresult = self._rimporter.importFromString('<a><b><c>foo</c></b></a>',
+                                                   result=Container())
+
+        # check tree that's built
+        for r in [result, rresult]:
+            self.assertEquals(A, type(r.children[0]))
+            self.assertEquals(B, type(r.children[0].children[0]))
+            self.assertEquals(C, type(r.children[0].children[0].children[0]))
+    
+    def test_element_not_allowed(self):
+        self.assertRaises(xmlimport.ElementNotAllowedError,
+                          self._rimporter.importFromString, '<a><c></c></a>',
+                          result=Container())
+
+    def test_element_not_allowed_no_subhandler(self):
+        self.assertRaises(xmlimport.ElementNotAllowedError,
+                          self._rimporter.importFromString, '<a><d></d></a>',
+                          result=Container())
+
+    def test_element_not_allowed_ignore(self):
+        result = self._rimporter.importFromString('<a><c></c></a>',
+                                                  settings=IGNORE_SETTINGS,
+                                                  result=Container())
+        self.assertEquals(0, len(result.children[0].children))
         
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [XMLImportTestCase, NoStartObjectImportTestCase,
-                     ImportExportTestCase, DefaultHandlerTestCase]:
+                     ImportExportTestCase, DefaultHandlerTestCase,
+                     NotAllowedTestCase]:
         suite.addTest(unittest.makeSuite(testcase))
     return suite
 

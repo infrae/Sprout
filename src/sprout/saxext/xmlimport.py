@@ -12,12 +12,25 @@ from StringIO import StringIO
 class XMLImportError(Exception):
     pass
 
+class NotAllowedError(XMLImportError):
+    """Something found that is not allowed.
+    """
+
+class ElementNotAllowedError(NotAllowedError):
+    """Element is found that is not allowed.
+    """
+
+class TextNotAllowedError(NotAllowedError):
+    """Text is found that is not allowed.
+    """
+    
 class BaseSettings:
     """Base class of settings sent to the handlers.
 
     Subclass this for custom settings objects.
     """
-    pass
+    def ignoreNotAllowed(self):
+        return False
 
 # null settings contains the default settings
 NULL_SETTINGS = BaseSettings()
@@ -36,7 +49,7 @@ class Importer:
         if handler_map is not None:
             self.addHandlerMap(handler_map)
         self._stack = []
-
+        
     # MANIPULATORS
 
     def addHandlerMap(self, handler_map):
@@ -162,7 +175,7 @@ class Importer:
         stack.pop()
         if not stack:
             del self._mapping[element]
-            
+   
 class _SaxImportHandler(ContentHandler):
     """Receives the SAX events and dispatches them to sub handlers.
     """
@@ -190,7 +203,7 @@ class _SaxImportHandler(ContentHandler):
     def startElementNS(self, name, qname, attrs):
         factory = self._importer._getHandler(name)
         if factory is None:
-            handler = self._handler_stack[-1]
+            handler = parent_handler = self._handler_stack[-1]
         else:
             if self._handler_stack:
                 parent_handler = self._handler_stack[-1]
@@ -207,23 +220,32 @@ class _SaxImportHandler(ContentHandler):
             self._importer._pushOverrides(handler.getOverrides())
             self._handler_stack.append(handler)
             self._depth_stack.append(self._depth)
-        handler.startElementNS(name, qname, attrs)
+        if (parent_handler is None or
+            parent_handler._checkElementAllowed(name)):
+            handler.startElementNS(name, qname, attrs)
         self._depth += 1
 
     def endElementNS(self, name, qname):
         self._depth -= 1
-        handler = self._handler_stack[-1]
+        handler = parent_handler = self._handler_stack[-1]
         if self._depth == self._depth_stack[-1]:
             self._result = handler.result()
             self._handler_stack.pop()
             self._depth_stack.pop()
             self._importer._popOverrides()
-        handler.endElementNS(name, qname)
-        
+            if self._handler_stack:
+                parent_handler = self._handler_stack[-1]
+            else:
+                parent_handler = None
+        if (parent_handler is None or
+            parent_handler._checkElementAllowed(name)):
+            handler.endElementNS(name, qname)
+
     def characters(self, chrs):
         handler = self._handler_stack[-1]
-        handler.characters(chrs)
-
+        if handler._checkTextAllowed(chrs):
+            handler.characters(chrs)
+        
     def getInfo(self):
         return self._info
     
@@ -333,6 +355,24 @@ class BaseHandler(object):
         """Get import settings object.
         """
         return self._settings
+
+    def _checkElementAllowed(self, name):
+        if self.isElementAllowed(name):
+            return True
+        if self._settings.ignoreNotAllowed():
+            return False
+        raise ElementNotAllowedError,\
+              "Element %s in namespace %s is not allowed here" % (
+            name[1], name[0])
+
+    def _checkTextAllowed(self, chrs):
+        if self.isTextAllowed(chrs):
+            return True
+        if self._settings.ignoreNotAllowed():
+            return False
+        raise TextNotAllowedError,\
+              "Element %s in namespace %s is not allowed here" % (
+            name[1], name[0])
     
     # OVERRIDES 
     
@@ -353,3 +393,25 @@ class BaseHandler(object):
         """
         return {}
 
+    def isElementAllowed(self, name):
+        """Returns True if element is to be processed at all by handler.
+        
+        name - ns, name tuple.
+
+        Can be overridden in subclass. If it returns False, element is
+        completely ignored or error is raised, depending on configuration
+        of importer.
+        """
+        return True
+
+    def isTextAllowed(self, chrs):
+        """Returns True if text is to be processed at all by handler.
+
+        chrs - text input
+
+        Can be overridden in subclass. If it is False, text is either
+        completely ignored or error is raised depending on configuration of
+        importer.
+        """
+        return True
+    
