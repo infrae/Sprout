@@ -52,6 +52,11 @@ class HTML2SaxTestCase(unittest.TestCase):
             '<b/>',
             makeXML('<b>&foo;</b>'))
 
+    def test_just_text(self):
+        self.assertEquals(
+            'just text',
+            makeXML('just text'))
+        
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [HTML2SaxTestCase]:
