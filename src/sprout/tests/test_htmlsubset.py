@@ -11,6 +11,11 @@ class SubsetTestCase(unittest.TestCase):
         document = getDOMImplementation().createDocument(None, 'p')
         p = self._subset.parse(text, document.documentElement)
         return p.toXML()
+
+    def filteredParse(self, text):
+        document = getDOMImplementation().createDocument(None, 'p')
+        p = self._subset.filteredParse(text, document.documentElement)
+        return p.toXML()
     
     def test_simple_em(self):
         self.assertEquals('<p><em>Foo</em></p>', self.parse('<i>Foo</i>'))
@@ -99,6 +104,23 @@ class SubsetTestCase(unittest.TestCase):
             '<p>Foo<br></br>Bar</p>',
             self.parse('Foo<br>Hoi</br>Bar'))
 
+    def test_unknown_tag(self):
+        self.assertEquals(
+            '<p>FooBar</p>',
+            self.parse('Foo<hoi>Hoi</hoi>Bar'))
+
+    # filtered parse tests
+    def test_unknown_tag_filtered(self):
+        self.assertEquals(
+            '<p>Foo&lt;hoi&gt;Hoi&lt;/hoi&gt;Bar</p>',
+            self.filteredParse('Foo<hoi>Hoi</hoi>Bar'))
+
+    def test_unknown_attributes_filtered(self):
+        self.assertEquals(
+            '<p>&lt;a href="http://www.foo.com" hoi="bar"&gt;testThe end</p>',
+            self.filteredParse('<a href="http://www.foo.com" hoi="bar">test</a>The end'))
+
+        
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [SubsetTestCase]:

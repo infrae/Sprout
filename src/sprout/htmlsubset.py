@@ -28,9 +28,6 @@ class Subset:
             element.getRequiredAttributes(),
             element.getOptionalAttributes())
         self._importer_dict[(None, element.getName())] = element.getHandler()
-        
-    def getTagFilter(self):
-        return self._tagfilter
 
     def getImporter(self):
         return xmlimport.Importer(self._importer_dict)
@@ -41,6 +38,10 @@ class Subset:
             return False
         return element.isAllowed(name)
 
+    def filteredParse(self, html, result):
+        html = self._tagfilter.escapeNonElements(html)
+        return self.parse(html, result)
+    
     def parse(self, html, result):
         importer = self.getImporter()
         handler = importer.importHandler(SubsetSettings(self), result)
