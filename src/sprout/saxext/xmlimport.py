@@ -38,13 +38,12 @@ NULL_SETTINGS = BaseSettings()
 class Importer:
     """A SAX based importer.
     """
-    def __init__(self, handler_map=None, default_handler=None):
+    def __init__(self, handler_map=None):
         """Create an importer.
 
         The handler map is a mapping from element (ns, name) tuple to
         import handler, which is a subclass of BaseHandler.
         """
-        self._default_handler = default_handler
         self._mapping = {}
         if handler_map is not None:
             self.addHandlerMap(handler_map)
@@ -142,7 +141,7 @@ class Importer:
         try:
             return self._mapping[element][-1]
         except KeyError:
-            return self._default_handler
+            return None
 
     def _pushOverrides(self, overrides):
         """Push override handlers onto stack.
@@ -182,7 +181,8 @@ class _SaxImportHandler(ContentHandler):
     
     def __init__(self, importer, settings=None, result=None, info=None):
         self._importer = importer
-        self._handler_stack = []
+        # top of the handler stack is handler which ignores any events,
+        self._handler_stack = [IgnoringHandler(result, None, settings, info)]
         self._depth_stack = []
         self._depth = 0
         self._outer_result = result
@@ -205,14 +205,9 @@ class _SaxImportHandler(ContentHandler):
         if factory is None:
             handler = parent_handler = self._handler_stack[-1]
         else:
-            if self._handler_stack:
-                parent_handler = self._handler_stack[-1]
-                result = parent_handler.result()
-            else:
-                parent_handler = None
-                result = self._result
+            parent_handler = self._handler_stack[-1]
             handler = factory(
-                result,
+                parent_handler.result(),
                 parent_handler,
                 self._settings,
                 self._info)
@@ -220,25 +215,23 @@ class _SaxImportHandler(ContentHandler):
             self._importer._pushOverrides(handler.getOverrides())
             self._handler_stack.append(handler)
             self._depth_stack.append(self._depth)
-        if (parent_handler is None or
-            parent_handler._checkElementAllowed(name)):
+        if parent_handler._checkElementAllowed(name):
             handler.startElementNS(name, qname, attrs)
         self._depth += 1
 
     def endElementNS(self, name, qname):
         self._depth -= 1
-        handler = parent_handler = self._handler_stack[-1]
+        handler = self._handler_stack[-1]
         if self._depth == self._depth_stack[-1]:
             self._result = handler.result()
             self._handler_stack.pop()
             self._depth_stack.pop()
             self._importer._popOverrides()
-            if self._handler_stack:
-                parent_handler = self._handler_stack[-1]
-            else:
-                parent_handler = None
-        if (parent_handler is None or
-            parent_handler._checkElementAllowed(name)):
+            parent_handler = self._handler_stack[-1]
+        else:
+            parent_handler = handler
+    
+        if parent_handler._checkElementAllowed(name):
             handler.endElementNS(name, qname)
 
     def characters(self, chrs):
@@ -414,4 +407,10 @@ class BaseHandler(object):
         importer.
         """
         return True
+    
+class IgnoringHandler(BaseHandler):
+    """A handler that ignores any incoming events.
+    """
+    pass
+
     
