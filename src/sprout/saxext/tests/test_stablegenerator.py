@@ -77,7 +77,33 @@ class TestCase(unittest.TestCase):
         g.endElementNS((None, 'foo'), None)
         out = f.getvalue()
         self.assertEquals('<foo><bar>text</bar></foo>', out)        
-    
+
+    def test_namespace_close(self):
+        f = StringIO()
+        g = StableXMLGenerator(f)
+        uri = 'http://ns.infrae.com/test'
+        g.startPrefixMapping('test', uri)
+        g.startElementNS((uri, 'foo'), None, {})
+        g.endElementNS((uri, 'foo'), None)
+        g.endPrefixMapping('test')
+        out = f.getvalue()
+        self.assertEquals('<test:foo xmlns:test="http://ns.infrae.com/test"/>',
+                          out)
+
+    def test_attr_sorting(self):
+        f = StringIO()
+        g = StableXMLGenerator(f)
+        d = {
+            (None, 'a'): 'A',
+            (None, 'b'): 'B',
+            (None, 'c'): 'C',
+            (None, 'd'): 'D',
+            }
+        g.startElementNS((None, 'foo'), None, d)
+        g.endElementNS((None, 'foo'), None)
+        out = f.getvalue()
+        self.assertEquals('<foo a="A" b="B" c="C" d="D"/>', out)
+        
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(TestCase)])

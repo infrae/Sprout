@@ -1,4 +1,4 @@
-from xml.sax.saxutils import XMLGenerator
+from xml.sax.saxutils import XMLGenerator, writeattr
 
 class StableXMLGenerator(XMLGenerator):
     def __init__(self, out=None, encoding="iso-8859-1"):
