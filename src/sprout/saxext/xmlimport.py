@@ -37,6 +37,15 @@ class Importer:
         for element, handler in handler_map.items():
             self._mapping[element] = [handler]
 
+    def registerHandler(self, element, handler_factory):
+        """Register a handler for a single element.
+        
+        element - an xml element name
+        handler_factory - the class of the SAX event handler for it
+                           (subclass of BaseHandler)
+        """
+        self._mapping[element] = [handler_factory]
+            
     def importHandler(self, settings=None, result=None):
         """Get import handler.
 
