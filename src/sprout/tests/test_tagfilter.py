@@ -101,6 +101,14 @@ class TagFilterTestCase(unittest.TestCase):
         self.assertEquals(
             '<foo bar="Bar" hoi="Hoi" baz="Baz">',
             s)
+
+    def test_immediate_close(self):
+        f = TagFilter()
+        f.registerElement('br', [], [])
+        s = f.escapeNonElements('Hoi<br/>Dag')
+        self.assertEquals(
+            'Hoi<br/>Dag',
+            s)
         
         
 def test_suite():

@@ -125,6 +125,10 @@ class SubsetTestCase(unittest.TestCase):
             '<p>&lt;a href="http://www.foo.com" hoi="bar"&gt;testThe end</p>',
             self.filteredParse('<a href="http://www.foo.com" hoi="bar">test</a>The end'))
 
+    def test_br_immediate_close_filtered(self):
+        self.assertEquals(
+            '<p>Hoi<br></br>Dag</p>',
+            self.filteredParse('Hoi<br/>Dag'))
         
 def test_suite():
     suite = unittest.TestSuite()
