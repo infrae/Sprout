@@ -35,7 +35,13 @@ class MooProducer(xmlexport.BaseProducer):
         self.startElement('moo', self.context._attrs)
         self.handler.characters(self.context._data)
         self.endElement('moo')
-    
+
+class GooProducer(xmlexport.BaseProducer):
+    def sax(self):
+        self.startElement('goo')
+        self.handler.characters('An unregistered class.')
+        self.endElement('goo')
+        
 class XMLExportTestCase(unittest.TestCase):
     def setUp(self):
         exporter = xmlexport.Exporter(
@@ -116,11 +122,25 @@ class XMLGeneratorTest(unittest.TestCase):
         self.assertEquals(
             '<?xml version="1.0" encoding="utf-8"?>\n<hey/><foo/>',
             self.exporter.exportToString(tree))
-            
+
+class FallbackTest(unittest.TestCase):
+    def setUp(self):
+        exporter = xmlexport.Exporter(None, CustomXMLGenerator)
+        exporter.registerProducer(
+            Foo, FooProducer)
+        exporter.registerFallbackProducer(GooProducer)
+        self.exporter = exporter
+        
+    def test_fallback_producer(self):
+        tree = Foo([Baz()])
+        self.assertEquals(
+            '<?xml version="1.0" encoding="utf-8"?>\n<hey/><foo><hey/><goo>An unregistered class.</goo></foo>',
+            self.exporter.exportToString(tree))
+        
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [XMLExportTestCase, XMLExportNamespaceTestCase,
-         NoDefaultNamespaceTestCase, XMLGeneratorTest]:
+         NoDefaultNamespaceTestCase, XMLGeneratorTest, FallbackTest]:
         suite.addTest(unittest.makeSuite(testcase))
     return suite
 

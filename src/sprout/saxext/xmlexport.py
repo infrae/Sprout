@@ -52,6 +52,16 @@ class Exporter:
         """
         self._mapping[klass] = producer_factory
         
+    def registerFallbackProducer(self, producer_factory):
+        """Register a fallback XML producer. If a fallback producer is
+        registered, it will be used to produce the XML for every class that
+        has no producer of its own registered.
+
+        producer_factory - the class of the SAX event producer
+                           (subclass of BaseProducer)
+        """
+        self._fallback = producer_factory
+        
     def registerNamespace(self, prefix, uri):
         """Register a namespace.
 
@@ -120,8 +130,12 @@ class Exporter:
         class_ = context.__class__
         producer_factory = self._mapping.get(class_, None)
         if producer_factory is None:
-            raise XMLExportError, ("Cannot find SAX event producer for: %s" %
-                                   class_)
+            if self._fallback is None:
+                raise XMLExportError, (
+                    "Cannot find SAX event producer for: %s" %
+                    class_)
+            else:
+                producer_factory = self._fallback
         return producer_factory(context, self, handler, settings, data)
 
 class BaseProducer:
