@@ -24,7 +24,7 @@ class TextNotAllowedError(NotAllowedError):
     """Text is found that is not allowed.
     """
     
-class BaseSettings:
+class BaseSettings(object):
     """Base class of settings sent to the handlers.
 
     Subclass this for custom settings objects.
