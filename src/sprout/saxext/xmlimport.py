@@ -77,7 +77,7 @@ class ElementRegistry:
         if not stack:
             del self._mapping[element]
     
-class SaxImportHandler(ContentHandler):
+class _SaxImportHandler(ContentHandler):
     """Receives the SAX events and dispatches them to sub handlers.
     """
     
@@ -222,7 +222,7 @@ def importFromFile(f, registry, start_object, settings=None):
     settings - optional import settings object that can be inspected
                by handlers
     """ 
-    handler = SaxImportHandler(registry, start_object, settings)
+    handler = _SaxImportHandler(registry, start_object, settings)
     parser = xml.sax.make_parser()
     parser.setFeature(feature_namespaces, 1)
     parser.setContentHandler(handler)
