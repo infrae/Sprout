@@ -1,6 +1,15 @@
 from xml.sax.saxutils import XMLGenerator, writeattr
 
 class StableXMLGenerator(XMLGenerator):
+    """A generator that produces 'stable' XML.
+
+    For the same events the generated XML is exactly equivalent each time;
+    attributes are sorted so even dictionary key order does not matter.
+
+    Another feature that this generator adds is the immediate closing of
+    elements that do not contain any content, instead of generating a
+    separate closing tag.
+    """
     def __init__(self, out=None, encoding="iso-8859-1"):
         XMLGenerator.__init__(self, out, encoding)
         self._last_start_element = None
