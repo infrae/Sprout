@@ -57,6 +57,11 @@ class SubsetTestCase(unittest.TestCase):
             '<p><link url="http://www.infrae.com">Foo</link></p>',
             self.parse('<a href="http://www.infrae.com">Foo<a href="foo">Bar</a></a>'))
 
+    def test_link_markup3(self):
+        self.assertEquals(
+            '<p><link url="http://www.infrae.com">Foo</link></p>',
+            self.parse('<a href="http://www.infrae.com">Foo<hoi>Bar</hoi></a>'))
+        
     def test_index(self):
         self.assertEquals(
             '<p><index name="Foo"></index></p>',
