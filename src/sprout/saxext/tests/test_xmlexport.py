@@ -71,6 +71,22 @@ class XMLExportNamespaceTestCase(unittest.TestCase):
             '<?xml version="1.0" encoding="utf-8"?>\n<foo xmlns="http://www.infrae.com/ns/test" xmlns:test2="http://www.infrae.com/ns/test2"><hm test2:attr="value"></hm></foo>',
             self.registry.xmlToString(tree))
         
+
+class NoDefaultNamespaceTestCase(unittest.TestCase):
+    def setUp(self):
+        registry = xmlexport.XMLSourceRegistry(None)
+        registry.registerXMLSource(
+            Foo, FooXMLSource)
+        registry.registerXMLSource(
+            Bar, BarXMLSource)
+        self.registry = registry
+        
+    def test_no_namespace_declaration(self):
+        tree = Foo([])
+        self.assertEquals(
+            '<?xml version="1.0" encoding="utf-8"?>\n<foo></foo>',
+            self.registry.xmlToString(tree))
+        
 if __name__ == '__main__':
     unittest.main()
     

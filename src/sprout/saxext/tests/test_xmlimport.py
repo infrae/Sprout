@@ -1,6 +1,6 @@
 import unittest
 
-from sprout.saxext import xmlimport
+from sprout.saxext import xmlimport, xmlexport
 
 class Doc:
     def __init__(self):
@@ -54,16 +54,34 @@ class AlphaHandler(xmlimport.BaseHandler):
     def startElementNS(self, name, qname, attrs):
         self.setResult(Alpha())
         self.parent().setAlpha(self.result())
+
+class AlphaSource(xmlexport.BaseSource):
+    def sax(self):
+        self.startElement('alpha')
+        for obj in self.context.getSub():
+            self.subsax(obj)
+        self.endElement('alpha')
         
 class BetaHandler(xmlimport.BaseHandler):
     def characters(self, data):
         self.setResult(Beta(data))
         self.parent().appendSub(self.result())
+
+class BetaSource(xmlexport.BaseSource):
+    def sax(self):
+        self.startElement('beta')
+        self.reader.characters(self.context.getValue())
+        self.endElement('beta')
         
 class GammaHandler(xmlimport.BaseHandler):
     def startElementNS(self, name, qname, attrs):
         self.setResult(Gamma(attrs[(None, 'value')]))
         self.parent().appendSub(self.result())
+
+class GammaSource(xmlexport.BaseSource):
+    def sax(self):
+        self.startElement('gamma', {'value':self.context.getValue()})
+        self.endElement('gamma')
         
 class DeltaHandler(xmlimport.BaseHandler):
     def getOverrides(self):
@@ -74,6 +92,12 @@ class DeltaHandler(xmlimport.BaseHandler):
 
     def endElementNS(self, name, qname):
         self.parent().appendSub(self.result())
+
+class DeltaSource(xmlexport.BaseSource):
+    def sax(self):
+        self.startElement('delta', {'attr': self.context.getValue()})
+        self.subsax(self.context.getExtra())
+        self.endElement('delta')
         
 class SubBetaHandler(xmlimport.BaseHandler):
     def characters(self, data):
@@ -120,6 +144,7 @@ class XMLImportTestCase(unittest.TestCase):
             self.xml, self._registry, result=result)
         self.assertEquals(result, call_result)
         
+    
 class NoStartObjectAlphaHandler(xmlimport.BaseHandler):
     def startElementNS(self, name, qname, attrs):
         self.setResult(Alpha())
@@ -154,6 +179,42 @@ class NoStartObjectImportTestCase(unittest.TestCase):
         self.assertEquals('Five', sub[4].getValue())
         self.assertEquals('Six', sub[4].getExtra().getValue())
 
+class ImportExportTestCase(unittest.TestCase):
+    def setUp(self):
+        self._registry = xmlimport.ElementRegistry({
+            (None, 'alpha'): NoStartObjectAlphaHandler,
+            (None, 'beta') : BetaHandler,
+            (None, 'gamma') : GammaHandler,
+            (None, 'delta') : DeltaHandler
+            })
+        
+        self._exportregistry = xmlexport.XMLSourceRegistry(None)
+        self._exportregistry.registerXMLSource(
+            Alpha, AlphaSource)
+        self._exportregistry.registerXMLSource(
+            Beta, BetaSource)
+        self._exportregistry.registerXMLSource(
+            Gamma, GammaSource)
+        self._exportregistry.registerXMLSource(
+            Delta, DeltaSource)
+        
+        self._xml = '''\
+<alpha>
+   <beta>One</beta>
+   <gamma value="Two" />
+   <beta>Three</beta>
+   <gamma value="Four" />
+   <delta attr="Five"><beta>Six</beta></delta>
+</alpha>
+'''
+
+    def test_import_export(self):
+        result = xmlimport.importFromString(self._xml, self._registry)
+        first_xml = self._exportregistry.xmlToString(result)
+        result = xmlimport.importFromString(first_xml, self._registry)
+        second_xml = self._exportregistry.xmlToString(result)
+        self.assertEquals(first_xml, second_xml)
+        
 if __name__ == '__main__':
     unittest.main()
     

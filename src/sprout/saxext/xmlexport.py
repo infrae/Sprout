@@ -42,7 +42,7 @@ class XMLSourceRegistry:
 
         klass - the class of the object we want to serialize as XML
         xml_source - the class of the XML source for it (subclass of
-        BaseXMLSource)
+        BaseSource)
         """
         self._mapping[klass] = xml_source
 
@@ -87,7 +87,8 @@ class XMLSourceRegistry:
         """
         if settings.asDocument():
             reader.startDocument()
-        reader.startPrefixMapping(None, self._default_namespace)
+        if self._default_namespace is not None:
+            reader.startPrefixMapping(None, self._default_namespace)
         for prefix, uri in self._namespaces.items():
             reader.startPrefixMapping(prefix, uri)
         self._getXMLSource(context, reader, settings).sax()
@@ -114,7 +115,7 @@ class XMLSourceRegistry:
             raise XMLExportError, "Cannot find source for: %s" % class_
         return xmlsource(context, self, reader, settings)
 
-class BaseXMLSource:
+class BaseSource:
     """Base class for XML sources.
 
     Subclass this to create an XML source.
@@ -122,6 +123,7 @@ class BaseXMLSource:
     Override the sax method in your subclass. The sax method
     can use the following attributes and methods:
 
+    context - the object being exported.
     reader - the SAX handler object, you can send arbitrary SAX events to it,
              such as startElementNS, endElementNS, characters, etc.
     startElement, endElement - convenient ways to generate element events
@@ -202,3 +204,5 @@ class BaseXMLSource:
         """
         self.getXMLSource(context).sax()
                 
+# XXX backwards compatibility
+BaseXMLSource = BaseSource
