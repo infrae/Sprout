@@ -43,10 +43,14 @@ class TagFilter:
         self._entities = re.compile('|'.join(entity_names),
                                     re.IGNORECASE | re.MULTILINE)
         
-    def registerElement(self, name, attribute_names=None):
-        attribute_names = attribute_names or []
-        self._elements[name] = sets.Set(attribute_names)
-
+    def registerElement(self, name,
+                        attribute_names=None,
+                        optional_attribute_names=None):
+        attribute_names = sets.Set(attribute_names or [])
+        optional_attribute_names = sets.Set(optional_attribute_names or [])
+        all_attribute_names = attribute_names.union(optional_attribute_names)
+        self._elements[name] = attribute_names, all_attribute_names
+        
     def getElementNames(self):
         return self._elements.keys()
     
@@ -56,7 +60,7 @@ class TagFilter:
         Ranges that are valid tags will be blocked.
         """
         b = Ranges(0, len(s))
-        for name, attrnames in self._elements.items():
+        for name, (required_attrnames, attrnames) in self._elements.items():
             # block all start tags
             q = re.compile('<%s' % name, re.IGNORECASE | re.MULTILINE)
             i = 0
@@ -72,7 +76,10 @@ class TagFilter:
                     # but only if attributes are the same
                     text_attrnames = sets.Set(
                         self.attribute_names(s, m.start(), m.end()))
-                    if attrnames == text_attrnames:
+                    # must have all required attribute names and
+                    # be a subset of all possible attribute names
+                    if (required_attrnames.issubset(text_attrnames) and
+                        text_attrnames.issubset(attrnames)):
                         b.block(m.start(), m.end())
             # block all end tags
             q = re.compile('</%s>' % name, re.IGNORECASE | re.MULTILINE)
@@ -104,7 +111,6 @@ class TagFilter:
                 subs = subs.replace('&', '&amp;')
                 subs = subs.replace('<', '&lt;')
                 subs = subs.replace('>', '&gt;')
-
             result.append(subs)
         return ''.join(result)
 

@@ -84,6 +84,25 @@ class TagFilterTestCase(unittest.TestCase):
         self.assertEquals(
             'hoi &alpha; &amp;foo;',
             s)
+
+    def test_optional_attributes(self):
+        f = TagFilter()
+        f.registerElement('foo', ['bar', 'baz'],  ['hoi'])
+
+        print "failing"
+        s = f.escapeNonElements('<foo bar="Bar" baz="Baz">')
+        self.assertEquals(
+            '<foo bar="Bar" baz="Baz">',
+            s)
+        s = f.escapeNonElements('<foo bar="Bar" hoi="Hoi">')
+        self.assertEquals(
+            '&lt;foo bar="Bar" hoi="Hoi"&gt;',
+            s)
+        s = f.escapeNonElements('<foo bar="Bar" hoi="Hoi" baz="Baz">')
+        self.assertEquals(
+            '<foo bar="Bar" hoi="Hoi" baz="Baz">',
+            s)
+        
         
 def test_suite():
     suite = unittest.TestSuite()
