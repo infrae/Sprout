@@ -46,7 +46,7 @@ class Importer:
         """
         self._mapping[element] = [handler_factory]
             
-    def importHandler(self, settings=None, result=None):
+    def importHandler(self, settings=None, result=None, info=None):
         """Get import handler.
 
         Useful when we are sending the SAX events directly, not from file.
@@ -58,9 +58,9 @@ class Importer:
         returns handler object. handler.result() gives the end result, or pass
         initial result yourself.
         """
-        return _SaxImportHandler(self, settings, result)
+        return _SaxImportHandler(self, settings, result, info)
 
-    def importFromFile(self, f, settings=None, result=None):
+    def importFromFile(self, f, settings=None, result=None, info=None):
         """Import from file object.
 
         f - file object
@@ -71,7 +71,7 @@ class Importer:
         returns top result object
         """
         self.clear()
-        handler = self.importHandler(settings, result)
+        handler = self.importHandler(settings, result, info)
         parser = xml.sax.make_parser()
         parser.setFeature(feature_namespaces, 1)
         parser.setContentHandler(handler)
@@ -79,7 +79,7 @@ class Importer:
         parser.parse(f)
         return handler.result()
 
-    def importFromString(self, s, settings=None, result=None):
+    def importFromString(self, s, settings=None, result=None, info=None):
         """Import from string.
 
         s - string with XML text
@@ -90,7 +90,7 @@ class Importer:
         returns top result object
         """
         f = StringIO(s)
-        return self.importFromFile(f, settings, result)
+        return self.importFromFile(f, settings, result, info)
 
     def clear(self):
         """Clear registry from any overrides.
@@ -154,7 +154,7 @@ class _SaxImportHandler(ContentHandler):
     """Receives the SAX events and dispatches them to sub handlers.
     """
     
-    def __init__(self, importer, settings=None, result=None):
+    def __init__(self, importer, settings=None, result=None, info=None):
         self._importer = importer
         self._handler_stack = []
         self._depth_stack = []
@@ -163,7 +163,8 @@ class _SaxImportHandler(ContentHandler):
         self._result = result
         self._settings = settings
         self._locator = DummyLocator()
-     
+        self._info = info
+        
     def setDocumentLocator(self, locator):
         self._locator = locator
         
@@ -184,7 +185,11 @@ class _SaxImportHandler(ContentHandler):
             else:
                 parent_handler = None
                 result = self._result
-            handler = factory(result, parent_handler, self._settings)
+            handler = factory(
+                result,
+                parent_handler,
+                self._settings,
+                self._info)
             handler.setDocumentLocator(self._locator)
             self._importer._pushOverrides(handler.getOverrides())
             self._handler_stack.append(handler)
@@ -206,6 +211,9 @@ class _SaxImportHandler(ContentHandler):
         handler = self._handler_stack[-1]
         handler.characters(chrs)
 
+    def getInfo(self):
+        return self._info
+    
     def result(self):
         """Return result object of whole import.
 
@@ -242,7 +250,7 @@ class BaseHandler:
 
     This should be subclassed to implement your own handlers. 
     """
-    def __init__(self, parent, parent_handler, settings=None):
+    def __init__(self, parent, parent_handler, settings=None, info=None):
         """Initialize BaseHandler.
 
         parent - the parent object as being constructed in the import
@@ -254,6 +262,7 @@ class BaseHandler:
         self._result = None
         self._data = {}
         self._settings = settings
+        self._info = info
 
     # MANIPULATORS
 
@@ -273,6 +282,9 @@ class BaseHandler:
         
     # ACCESSORS
 
+    def getInfo(self):
+        return self._info
+    
     def getData(self, key):
         if self._data.has_key(key):
             return self._data[key]
