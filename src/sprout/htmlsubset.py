@@ -112,6 +112,12 @@ class AHandler(xmlimport.BaseHandler):
         node.appendChild(node.ownerDocument.createTextNode(data))
 
 class IndexHandler(xmlimport.BaseHandler):
+    def __init__(self, parent, parent_handler,
+                 settings=xmlimport.NULL_SETTINGS, info=None):
+        super(IndexHandler, self).__init__(parent, parent_handler,
+                                           settings, info)
+        self._data = []
+        
     def isElementAllowed(self, name):
         return False
     
@@ -122,9 +128,11 @@ class IndexHandler(xmlimport.BaseHandler):
         self.setResult(child)
 
     def characters(self, data):
-        node = self.result()
-        node.setAttribute('name', data)
-
+        self._data.append(data)
+        
+    def endElementNS(self, name, qname):
+        self.result().setAttribute('name', ''.join(self._data))
+        
 class BrHandler(xmlimport.BaseHandler):
     def isElementAllowed(self, name):
         return False

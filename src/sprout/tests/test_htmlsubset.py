@@ -62,6 +62,11 @@ class SubsetTestCase(unittest.TestCase):
             '<p><index name="Foo"></index></p>',
             self.parse('<index>Foo</index>'))
 
+    def test_index2(self):
+        self.assertEquals(
+            '<p><index name="Foo"></index></p>',
+            self.parse('<index>Fo<b>h</b>o</index>'))
+        
     def test_br(self):
         # can't collapse element to <br /> due to limited XML outputter
         # in tests
