@@ -108,7 +108,7 @@ class _SaxImportHandler(ContentHandler):
         else:
             if self._handler_stack:
                 parent_handler = self._handler_stack[-1]
-                object = parent_handler.getResult()
+                object = parent_handler.result()
             else:
                 parent_handler = None
                 object = self._object
@@ -144,9 +144,6 @@ class BaseHandler:
         self._parent_handler = parent_handler
         self._result = None
         self._data = {}
-        self._metadata_set = None
-        self._metadata_key = None
-        self._metadata = {}
         self._settings = settings
 
     # MANIPULATORS
@@ -169,17 +166,17 @@ class BaseHandler:
             return self._data[key]
         return None
 
-    def getParentHandler(self):
+    def parentHandler(self):
         """Gets the parent handler
         """
         return self._parent_handler
     
-    def getParent(self):
+    def parent(self):
         """Gets the parent 
         """
         return self._parent
     
-    def getResult(self):
+    def result(self):
         """Gets the result data for this handler or the result data of the
         parent, if this handler didn't set any
         """
@@ -188,6 +185,11 @@ class BaseHandler:
         else:
             return self._parent
 
+    def settings(self):
+        """Get import settings object.
+        """
+        return self._settings
+    
     # OVERRIDES 
     
     def startElementNS(self, name, qname, attrs):

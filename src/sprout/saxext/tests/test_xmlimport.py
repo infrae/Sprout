@@ -53,17 +53,17 @@ class Delta:
 class AlphaHandler(xmlimport.BaseHandler):
     def startElementNS(self, name, qname, attrs):
         self.setResult(Alpha())
-        self.getParent().setAlpha(self.getResult())
+        self.parent().setAlpha(self.result())
         
 class BetaHandler(xmlimport.BaseHandler):
     def characters(self, data):
         self.setResult(Beta(data))
-        self.getParent().appendSub(self.getResult())
+        self.parent().appendSub(self.result())
         
 class GammaHandler(xmlimport.BaseHandler):
     def startElementNS(self, name, qname, attrs):
         self.setResult(Gamma(attrs[(None, 'value')]))
-        self.getParent().appendSub(self.getResult())
+        self.parent().appendSub(self.result())
         
 class DeltaHandler(xmlimport.BaseHandler):
     def getOverrides(self):
@@ -73,12 +73,12 @@ class DeltaHandler(xmlimport.BaseHandler):
         self.setResult(Delta(attrs[(None, 'attr')]))
 
     def endElementNS(self, name, qname):
-        self.getParent().appendSub(self.getResult())
+        self.parent().appendSub(self.result())
         
 class SubBetaHandler(xmlimport.BaseHandler):
     def characters(self, data):
         self.setResult(Beta(data))
-        self.getParent().setExtra(self.getResult())
+        self.parent().setExtra(self.result())
 
 class XMLImportTestCase(unittest.TestCase):
     def setUp(self):
