@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import unittest
 from sprout.saxext.generator import XMLGenerator
 from StringIO import StringIO
@@ -30,7 +31,27 @@ class HTML2SaxTestCase(unittest.TestCase):
         self.assertEquals(
             '<b><i>Italic and bold</i></b>',
             makeXML('<b><i>Italic and bold'))
+
+    def test_entities(self):
+        self.assertEquals(
+            '<b>&amp;</b>',
+            makeXML('<b>&amp;</b>'))
+
+    def test_extended_entities(self):
+        self.assertEquals(
+            u'<b>é</b>',
+            makeXML('<b>&eacute;</b>'))
+
+    def test_unicode_entities(self):
+        self.assertEquals(
+            u'<b>é</b>',
+            makeXML('<b>&#233;</b>'))
         
+    def test_unknown_entities(self):
+        self.assertEquals(
+            '<b/>',
+            makeXML('<b>&foo;</b>'))
+
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [HTML2SaxTestCase]:

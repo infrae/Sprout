@@ -1,6 +1,7 @@
 import HTMLParser as htmlparser
 from HTMLParser import HTMLParser
 import re
+from htmlentitydefs import name2codepoint
 
 class Html2SaxParser(HTMLParser):
     """Turn arbitrary HTML events into XML-compliant SAX stream.
@@ -51,17 +52,28 @@ class Html2SaxParser(HTMLParser):
         self._handler.characters(data)
         
     def handle_charref(self, name):
-        # translate to unicode character
-        raise NotImplementedError
+        # &#...; direct unicode codepoint
+        try:
+            c = unichr(int(name))
+        except ValueError:
+            # can't handle this, ignore
+            return
+        self._handler.characters(c)
     
     def handle_entityref(self, name):
-        if name == 'lt':
-            self._handler.characters('<')
-        elif name == 'gt':
-            self._handler.characters('>')
-        elif name == 'amp':
-            self._handler.characters('&')
-            
+        # &foo; named entity reference
+        try:
+            nr = name2codepoint[name]
+        except KeyError:
+            # can't handle this, ignore
+            return
+        try:
+            c = unichr(nr)
+        except ValueError:
+            # can't handle this, ignore
+            return
+        self._handler.characters(c)
+        
     def handle_comment(self, data):
         # skip comments
         pass
