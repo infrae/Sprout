@@ -18,7 +18,7 @@ While Sprout's aim is mainly for use within Infrae at present, the
 code inside should be general enough for use in your own projects as
 well.
 
-Sprouts focus is mainly currently XML related. It features:
+Sprout's focus is mainly currently XML related. It features:
 
 * sprout.saxext, a library to make writing SAX-based code more easy.
 
