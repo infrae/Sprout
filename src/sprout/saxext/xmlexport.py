@@ -71,7 +71,12 @@ class BaseXMLSource:
         
         if attrs is not None:
             for key, value in attrs.items():
-                d[(None, key)] = value
+                # keep namespaced attributes
+                if isinstance(key, tuple):
+                    d[key] = value
+                else:
+                    d[(None, key)] = value
+
         self._reader.startElementNS(
             (ns, name),
             None,
