@@ -32,11 +32,14 @@ NULL_SETTINGS = BaseSettings()
 class Exporter:
     """Export objects to XML, using SAX.
     """
-    def __init__(self, default_namespace):
+    def __init__(self, default_namespace, generator=None):
         self._mapping = {}
         self._fallback = None
         self._default_namespace = default_namespace
         self._namespaces = {}
+        if generator is None:
+            generator = saxutils.XMLGenerator
+        self._generator = generator
 
     # MANIPULATORS
     
@@ -83,7 +86,7 @@ class Exporter:
         file - a Python file object to write to
         settings - optionally a settings object to configure export
         """
-        handler = saxutils.XMLGenerator(file, settings.outputEncoding())
+        handler = self._generator(file, settings.outputEncoding())
         self.exportToSax(obj, handler, settings)
 
     def exportToString(self, obj, settings=NULL_SETTINGS):
@@ -170,7 +173,6 @@ class BaseProducer:
                     d[key] = value
                 else:
                     d[(None, key)] = value
-
         self.handler.startElementNS(
             (ns, name),
             None,
