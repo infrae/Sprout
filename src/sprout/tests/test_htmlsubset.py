@@ -1,15 +1,15 @@
 # -*- coding: UTF-8 -*-
 import unittest
-from sprout import htmlsubset
+from sprout import htmlsubset, silvasubset
 from sprout.picodom import getDOMImplementation
 
 class SubsetTestCase(unittest.TestCase):
     def setUp(self):
-        self._importer = htmlsubset.createImporter()
-    
+        self._subset = silvasubset.createParagraphSubset()
+        
     def parse(self, text):        
         document = getDOMImplementation().createDocument(None, 'p')
-        p = htmlsubset.parse(text, self._importer, document.documentElement)
+        p = self._subset.parse(text, document.documentElement)
         return p.toXML()
     
     def test_simple_em(self):
