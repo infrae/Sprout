@@ -12,6 +12,29 @@ that case 'does its best' to produce a sane DOM tree.
 from sprout.saxext import xmlimport, html2sax, collapser
 import sets
 
+MARKUP_BASE = ['em', 'super', 'sub']
+MARKUP_LINK = ['link', 'index']
+MARKUP_TEXT = MARKUP_BASE + ['strong', 'underline']
+MARKUP_TEXT_BR = MARKUP_TEXT + ['br']
+MARKUP = MARKUP_TEXT_BR + MARKUP_LINK
+MARKUP_HEADING = MARKUP_BASE + MARKUP_LINK
+
+MARKUP_TEXT_TRANSLATION = {
+    'i': 'em',
+    'sup': 'super',
+    'sub': 'sub',
+    'b': 'strong',    
+    'u' : 'underline',
+    }
+
+MARKUP_TEXT_TRANSLATION_REVERSED = {}
+for key, value in MARKUP_TEXT_TRANSLATION.items():
+    MARKUP_TEXT_TRANSLATION_REVERSED[value] = key
+
+MARKUP_TEXT_BR_REVERSED = []
+for name in MARKUP_TEXT:
+    MARKUP_TEXT_BR_REVERSED.append(MARKUP_TEXT_TRANSLATION_REVERSED[name])
+
 class Element:
     def __init__(self, name, required_attributes, optional_attributes,
                  subelements):
@@ -54,29 +77,6 @@ def getParagraphElements():
     elements.append(Element('index', [], [], []))
     elements.append(Element('br', [], [], []))
     return elements
-
-MARKUP_BASE = ['em', 'super', 'sub']
-MARKUP_LINK = ['link', 'index']
-MARKUP_TEXT = MARKUP_BASE + ['strong', 'underline']
-MARKUP_TEXT_BR = MARKUP_TEXT + ['br']
-MARKUP = MARKUP_TEXT_BR + MARKUP_LINK
-MARKUP_HEADING = MARKUP_BASE + MARKUP_LINK
-
-MARKUP_TEXT_TRANSLATION = {
-    'i': 'em',
-    'sup': 'super',
-    'sub': 'sub',
-    'b': 'strong',    
-    'u' : 'underline',
-    }
-
-MARKUP_TEXT_TRANSLATION_REVERSED = {}
-for key, value in MARKUP_TEXT_TRANSLATION.items():
-    MARKUP_TEXT_TRANSLATION_REVERSED[value] = key
-
-MARKUP_TEXT_BR_REVERSED = []
-for name in MARKUP_TEXT:
-    MARKUP_TEXT_BR_REVERSED.append(MARKUP_TEXT_TRANSLATION_REVERSED[name])
 
 class SubsetSettings(xmlimport.BaseSettings):
     def __init__(self, elements):

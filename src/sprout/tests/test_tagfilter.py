@@ -89,7 +89,6 @@ class TagFilterTestCase(unittest.TestCase):
         f = TagFilter()
         f.registerElement('foo', ['bar', 'baz'],  ['hoi'])
 
-        print "failing"
         s = f.escapeNonElements('<foo bar="Bar" baz="Baz">')
         self.assertEquals(
             '<foo bar="Bar" baz="Baz">',
