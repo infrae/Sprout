@@ -1,6 +1,8 @@
-import sys, string
+"""
+An XML importer based on layered SAX handlers.
+"""
+
 from xml.sax.handler import ContentHandler
-from DateTime import DateTime
 
 class XMLImportError(Exception):
     pass
@@ -15,7 +17,7 @@ class XMLOverridableElementRegistry:
     def addHandlerMap(self, handler_map):
         for element, handler in handler_map.items():
             self._mapping[element] = [handler]
-            
+
     def _pushOverride(self, element, handler):
         self._mapping.setdefault(element, []).append(handler)
     
@@ -165,14 +167,3 @@ class BaseHandler:
     def characters(self, chrs):
         pass
 
-def generateUniqueId(org_id, context):
-        i = 0
-        id = org_id
-        ids = context.objectIds()
-        while id in ids:
-            i += 1
-            add = ''
-            if i > 1:
-                add = str(i)
-            id = 'copy%s_of_%s' % (add, org_id)
-        return id
