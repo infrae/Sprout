@@ -14,9 +14,8 @@ start_tag_re = re.compile(r"""
        )?
      )
    )*
-  \s*
-  /?                                 # could be singleton tag
   \s*                                # trailing whitespace
+  /?                                 # could be singleton tag
   >
 """, re.VERBOSE)
 

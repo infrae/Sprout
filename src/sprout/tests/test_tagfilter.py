@@ -110,6 +110,13 @@ class TagFilterTestCase(unittest.TestCase):
             'Hoi<br/>Dag',
             s)
         
+    def test_immediate_close_2(self):
+        f = TagFilter()
+        f.registerElement('foo', ['a'])
+        s = f.escapeNonElements('Hoi<foo a="Dag" />')
+        self.assertEquals(
+            'Hoi<foo a="Dag" />',
+            s)
         
 def test_suite():
     suite = unittest.TestSuite()
