@@ -75,6 +75,7 @@ class Importer:
         parser = xml.sax.make_parser()
         parser.setFeature(feature_namespaces, 1)
         parser.setContentHandler(handler)
+        handler.setDocumentLocator(parser)
         parser.parse(f)
         return handler.result()
 
@@ -161,6 +162,10 @@ class _SaxImportHandler(ContentHandler):
         self._outer_result = result
         self._result = result
         self._settings = settings
+        self._locator = DummyLocator()
+     
+    def setDocumentLocator(self, locator):
+        self._locator = locator
         
     def startDocument(self):
         pass 
@@ -180,6 +185,7 @@ class _SaxImportHandler(ContentHandler):
                 parent_handler = None
                 result = self._result
             handler = factory(result, parent_handler, self._settings)
+            handler.setDocumentLocator(self._locator)
             self._importer._pushOverrides(handler.getOverrides())
             self._handler_stack.append(handler)
             self._depth_stack.append(self._depth)
@@ -207,6 +213,29 @@ class _SaxImportHandler(ContentHandler):
         be the one we need, otherwise get result of outer element.
         """
         return self._outer_result or self._result
+    
+class DummyLocator:
+    """A dummy locator which is used if no document locator is available.
+    """
+    def getColumnNumber(self):
+        """Return the column number where the current event ends. 
+        """
+        return None
+        
+    def getLineNumber(self):
+        """Return the line number where the current event ends. 
+        """
+        return None
+
+    def getPublicId(self):
+        """Return the public identifier for the current event. 
+        """
+        return None
+
+    def getSystemId(self):
+        """Return the system identifier for the current event. 
+        """
+        return None
     
 class BaseHandler:
     """Base class of all handlers.
@@ -239,6 +268,9 @@ class BaseHandler:
         """
         self._data[key] = value
 
+    def setDocumentLocator(self, locator):
+        self._locator = locator
+        
     # ACCESSORS
 
     def getData(self, key):
@@ -246,6 +278,9 @@ class BaseHandler:
             return self._data[key]
         return None
 
+    def getDocumentLocator(self):
+         return self._locator
+            
     def parentHandler(self):
         """Gets the parent handler
         """
