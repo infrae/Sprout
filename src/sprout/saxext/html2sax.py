@@ -58,6 +58,8 @@ class Html2SaxParser(HTMLParser):
     def _createAttrDict(self, attrs):
         result = {}
         for key, value in attrs:
+            if value is None:
+                value = key
             result[(None, key)] = value
         return result
         

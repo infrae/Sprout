@@ -72,6 +72,11 @@ class HTML2SaxTestCase(unittest.TestCase):
         self.assertEquals(
             '<textarea> </textarea>',
             makeXML('<textarea></textarea>'))
+
+    def test_empty_attribute(self):
+        self.assertEquals(
+            '<option selected="selected">foo</option>',
+            makeXML('<option selected>foo</option>'))
         
 def test_suite():
     suite = unittest.TestSuite()
