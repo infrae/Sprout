@@ -7,6 +7,8 @@ inclusion of test.py to run the unit test suite falls under the
 "aggregation" clause of the GPL and thus does not affect the license
 of the rest of the package.
 
-sprout.saxext.generator is an improved version of the generator in the
-Python standard library. It is copyright PSF and comes under the
-Python license, detailed in doc/licenses/PythonLicense.txt.
+sprout.tagfilter contains regular expressions from the HTMLParser
+module in the Python standard library. sprout.saxext.generator is an
+improved version of the generator in the Python standard
+library. These are copyright PSF and come under the Python license,
+detailed in doc/licenses/PythonLicense.txt.
