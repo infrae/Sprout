@@ -167,6 +167,9 @@ class BaseProducer:
     def getInfo(self):
         return self._info
     
+    def getSettings(self):
+        return self._settings
+        
     def sax(self):
         """To be overridden in subclasses
         """

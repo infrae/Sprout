@@ -224,6 +224,9 @@ class _SaxImportHandler(ContentHandler):
     def getInfo(self):
         return self._info
     
+    def getSettings(self):
+        return self._settings
+
     def result(self):
         """Return result object of whole import.
 
