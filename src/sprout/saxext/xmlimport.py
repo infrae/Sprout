@@ -235,7 +235,7 @@ class BaseHandler:
     
     def setData(self, key, value):
         """Many sub-elements with text-data use this to pass that data to
-        their parent (self.getParentHandler().setData(foo, bar))
+        their parent (self.parentHandler().setData(foo, bar))
         """
         self._data[key] = value
 
