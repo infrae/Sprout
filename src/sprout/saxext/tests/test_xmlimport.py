@@ -378,7 +378,10 @@ class NotAllowedTestCase(unittest.TestCase):
                                                   settings=IGNORE_SETTINGS,
                                                   result=Container())
         self.assertEquals(0, len(result.children[0].children))
-        
+
+    # XXX what should happen if an element is ignored and it contains
+    # subelements or text? Should those events be ignored too?
+    
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [XMLImportTestCase, NoStartObjectImportTestCase,
