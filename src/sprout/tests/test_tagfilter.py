@@ -53,6 +53,38 @@ class TagFilterTestCase(unittest.TestCase):
             '&lt;a href="url" foo="bar"&gt;',
             s)
 
+    def test_entities(self):
+        f = TagFilter()
+        f.registerElement('b')
+        s = f.escapeNonElements('hoi &foo; dag &amp; iets &bar; nog wat')
+        self.assertEquals(
+            'hoi &amp;foo; dag &amp; iets &amp;bar; nog wat',
+            s)
+
+    def test_entities2(self):
+        f = TagFilter()
+        f.registerElement('b')
+        s = f.escapeNonElements('hoi &lt;foo&gt; &bar;')
+        self.assertEquals(
+            'hoi &lt;foo&gt; &amp;bar;',
+            s)
+
+    def test_entities3(self):
+        f = TagFilter(html_entities=True)
+        f.registerElement('b')
+        s = f.escapeNonElements('hoi &lt;foo&gt; &bar;')
+        self.assertEquals(
+            'hoi &lt;foo&gt; &amp;bar;',
+            s)
+
+    def test_entities4(self):
+        f = TagFilter(html_entities=True)
+        f.registerElement('b')
+        s = f.escapeNonElements('hoi &alpha; &foo;')
+        self.assertEquals(
+            'hoi &alpha; &amp;foo;',
+            s)
+        
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [TagFilterTestCase]:

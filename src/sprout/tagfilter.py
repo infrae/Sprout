@@ -1,4 +1,5 @@
 import re, sets
+from htmlentitydefs import name2codepoint
 from sprout.blockedrange import Ranges
 
 start_tag_re = re.compile(r"""
@@ -22,6 +23,8 @@ attrfind = re.compile(
     r'\s*([a-zA-Z_][-.:a-zA-Z_0-9]*)(\s*=\s*'
     r'(\'[^\']*\'|"[^"]*"|[-a-zA-Z0-9./,:;+*%?!&$\(\)_#=~]*))?')
 
+
+
 class TagFilter:
     """Can filter XMLish text escaping any tags that are not known.
 
@@ -31,8 +34,14 @@ class TagFilter:
     This right now only supports open tags and closing tags.
     """
     
-    def __init__(self):
+    def __init__(self, html_entities=False):
         self._elements = {}
+        if html_entities:
+            entity_names = ['&%s;' % name for name in name2codepoint.keys()]
+        else:
+            entity_names = ['&amp;', '&gt;', '&lt;']
+        self._entities = re.compile('|'.join(entity_names),
+                                    re.IGNORECASE | re.MULTILINE)
         
     def registerElement(self, name, attribute_names=None):
         attribute_names = attribute_names or []
@@ -75,7 +84,15 @@ class TagFilter:
                 index = m.start()
                 i = m.end()
                 b.block(index, i)
-                
+        # block all unknown entities
+        i = 0
+        while 1:
+            m = self._entities.search(s, i)
+            if m is None:
+                break
+            index = m.start()
+            i = m.end()
+            b.block(index, i)
         return b
 
     def escapeNonElements(self, text):
@@ -84,8 +101,10 @@ class TagFilter:
         for s, e, open in b.getRanges():
             subs = text[s:e]
             if open:
+                subs = subs.replace('&', '&amp;')
                 subs = subs.replace('<', '&lt;')
                 subs = subs.replace('>', '&gt;')
+
             result.append(subs)
         return ''.join(result)
 
