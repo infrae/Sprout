@@ -13,6 +13,8 @@ class Ranges:
         """Block another subrange.
         """
         open = []
+        # XXX could use bisect here to target possibly affected ranges,
+        # which might optimize it for complicated situations
         for s, e in self._open:
             # if there is overlap
             #  s..i...j..e
