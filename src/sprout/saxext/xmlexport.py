@@ -143,12 +143,12 @@ class BaseProducer:
     getProducer - to retrieve a producer for a sub object.
     subsax - to generate SAX events for a sub object
     """
-    def __init__(self, context, exporter, handler, settings, data):
+    def __init__(self, context, exporter, handler, settings, data=None):
         self.context = context
         self._exporter = exporter
         self.handler = handler
         self._settings = settings
-        self._export_data = data
+        self.export_data = data
         
     def sax(self):
         """To be overridden in subclasses
@@ -204,7 +204,7 @@ class BaseProducer:
         context - the context object to get producer for.
         """
         return self._exporter._getProducer(
-            context, self.handler, self._settings, self._export_data)
+            context, self.handler, self._settings, self.export_data)
 
     def subsax(self, context):
         """Generate SAX events for context object.
