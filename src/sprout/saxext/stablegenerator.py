@@ -83,12 +83,14 @@ class StableXMLGenerator(XMLGenerator):
         self._out.write('</%s>' % qname)
 
     def characters(self, content):
-        self._processLast()
-        XMLGenerator.characters(self, content)
+        if content:
+            self._processLast()
+            XMLGenerator.characters(self, content)
 
     def ignorableWhitespace(self, content):
-        self._processLast()
-        XMLGenerator.ignorableWhitespace(self, content)
+        if content:
+            self._processLast()
+            XMLGenerator.ignorableWhitespace(self, content)
 
     def processingInstruction(self, target, data):
         self._processLast()

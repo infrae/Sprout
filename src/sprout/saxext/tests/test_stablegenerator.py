@@ -12,6 +12,24 @@ class TestCase(unittest.TestCase):
         out = f.getvalue()
         self.assertEquals('<foo/>', out)
 
+    def test_close_empty_characters(self):
+        f = StringIO()
+        g = StableXMLGenerator(f)
+        g.startElementNS((None, 'foo'), None, {})
+        g.characters('')
+        g.endElementNS((None, 'foo'), None)
+        out = f.getvalue()
+        self.assertEquals('<foo/>', out)
+        
+    def test_close_empty_whitespace(self):
+        f = StringIO()
+        g = StableXMLGenerator(f)
+        g.startElementNS((None, 'foo'), None, {})
+        g.ignorableWhitespace('')
+        g.endElementNS((None, 'foo'), None)
+        out = f.getvalue()
+        self.assertEquals('<foo/>', out)
+
     def test_notclose_characters(self):
         f = StringIO()
         g = StableXMLGenerator(f)
@@ -58,8 +76,7 @@ class TestCase(unittest.TestCase):
         g.endElementNS((None, 'bar'), None)
         g.endElementNS((None, 'foo'), None)
         out = f.getvalue()
-        self.assertEquals('<foo><bar>text</bar></foo>', out)
-
+        self.assertEquals('<foo><bar>text</bar></foo>', out)        
     
 def test_suite():
     suite = unittest.TestSuite()
