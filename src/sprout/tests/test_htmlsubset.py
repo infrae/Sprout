@@ -132,7 +132,7 @@ class ParagraphSubsetTestCase(unittest.TestCase):
 
     def test_immediate_close_whitespace_filtered(self):
         self.assertEquals(
-            '<p>Hoi<link url="Foo"></link></p>',
+            '<p>Hoi<link url="Foo"> </link></p>',
             self.filteredParse('Hoi<a href="Foo" />'))
 
     def test_target_filtered(self):

@@ -49,7 +49,7 @@ class HTML2SaxTestCase(unittest.TestCase):
         
     def test_unknown_entities(self):
         self.assertEquals(
-            '<b/>',
+            '<b> </b>',
             makeXML('<b>&foo;</b>'))
 
     def test_just_text(self):
@@ -67,6 +67,11 @@ class HTML2SaxTestCase(unittest.TestCase):
         self.assertEquals(
             '<br/>',
             makeXML('<br></br>'))
+
+    def test_mandatory_closing_tags(self):
+        self.assertEquals(
+            '<textarea> </textarea>',
+            makeXML('<textarea></textarea>'))
         
 def test_suite():
     suite = unittest.TestSuite()
@@ -75,7 +80,7 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    main()
+    unittest.main()
     
 
     
