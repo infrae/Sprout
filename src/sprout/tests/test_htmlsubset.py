@@ -163,6 +163,22 @@ Baz'''
         self.assertEquals(
             '<p>Foo<br></br>Bar<br></br>Baz</p>',
             self.filteredParse(text))
+
+    
+    def test_can_place_a_in_i(self):
+        # should be able to place a element inside i tag
+        text = '<i><a href="http://www.infrae.com">Foo</a></i>'
+        self.assertEquals(
+            '<p><em><link url="http://www.infrae.com">Foo</link></em></p>',
+            self.filteredParse(text))
+
+    def test_can_place_i_in_i(self):
+        # XXX is this the right thing to do? perhaps clean up inner em
+        # and retain text would be better.
+        text = '<i>Foo<i>Bar</i>Baz</i>'
+        self.assertEquals(
+            '<p><em>Foo<em>Bar</em>Baz</em></p>',
+            self.filteredParse(text))
         
 class HeadingSubsetTestCase(unittest.TestCase):
     def setUp(self):
@@ -192,7 +208,7 @@ class HeadingSubsetTestCase(unittest.TestCase):
         self.assertEquals(
             '<heading>Foo&lt;b&gt;bold&lt;/b&gt;</heading>',
             self.filteredParse('Foo<b>bold</b>'))
-    
+        
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [ParagraphSubsetTestCase, HeadingSubsetTestCase]:

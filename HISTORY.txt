@@ -1,3 +1,8 @@
+under development
+-----------------
+
+* in Silva subset, accept nested <b>, <i> and <a href=""> in those.
+
 0.5.1
 -----
 

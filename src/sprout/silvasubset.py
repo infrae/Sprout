@@ -33,7 +33,7 @@ def createParagraphSubset():
     subset = SilvaParagraphSubset()
     for name in MARKUP_TEXT:
         handler = markupTextHandlerClass(name, MARKUP_TEXT_TRANSLATION[name])
-        element = htmlsubset.Element(name, [], [], MARKUP_TEXT_BR, handler)
+        element = htmlsubset.Element(name, [], [], MARKUP, handler)
         subset.registerElement(element)
     subset.registerElement(
         htmlsubset.Element('a', ['href'], ['target'],
