@@ -1,8 +1,13 @@
 """
 An XML importer based on layered SAX handlers.
-"""
 
+Elements can have their own sax handlers associated with them, which
+handle all events inside those elements.
+"""
+import xml.sax
+from xml.sax.handler import feature_namespaces
 from xml.sax.handler import ContentHandler
+from StringIO import StringIO
 
 class XMLImportError(Exception):
     pass
@@ -14,42 +19,68 @@ class XMLOverridableElementRegistry:
         self._mapping = {}
         self._stack = []
 
+    # MANIPULATORS
+    
     def addHandlerMap(self, handler_map):
+        """Add map of handlers for elements.
+
+        handler_map - mapping with key is element tuple (ns, name),
+                      value is handler instance.
+        """
         for element, handler in handler_map.items():
             self._mapping[element] = [handler]
 
-    def _pushOverride(self, element, handler):
-        self._mapping.setdefault(element, []).append(handler)
     
     def pushOverrides(self, overrides):
+        """Push override handlers onto stack.
+
+        Overrides provide new handlers for (existing) elements.
+        Until popped again, the new handlers are used.
+
+        overrides - mapping with key is element tuple (ns, name),
+                    value is handler instance.
+        """
         for element, handler in overrides.items():
             self._pushOverride(element, handler)
         self._stack.append(overrides.keys())
       
+    def popOverrides(self):
+        """Pop overrides.
+
+        Removes the overrides from the stack, restoring to previous
+        state.
+        """
+        elements = self._stack.pop()
+        for element in elements:
+            self._popOverride(element)
+
+    # ACCESSORS
+    
+    def getXMLElementHandler(self, element):
+        """Retrieve handler for a particular element (ns, name) tuple.
+        """
+        try:
+            return self._mapping[element][-1]
+        except KeyError:
+            return None
+
+    # PRIVATE
+    
+    def _pushOverride(self, element, handler):
+        self._mapping.setdefault(element, []).append(handler)
+
     def _popOverride(self, element):
         stack = self._mapping[element]
         stack.pop()
         if not stack:
             del self._mapping[element]
     
-    def popOverrides(self):
-        elements = self._stack.pop()
-        for element in elements:
-            self._popOverride(element)
-            
-    def getXMLElementHandler(self, element):
-        try:
-            return self._mapping[element][-1]
-        except KeyError:
-            return None
-
-theElementRegistry = XMLOverridableElementRegistry()
-
-getXMLElementHandler = theElementRegistry.getXMLElementHandler
-
 class SaxImportHandler(ContentHandler):
-    def __init__(self, start_object, settings=None):
-        self._registry = theElementRegistry
+    """Receives the SAX events and dispatches them to sub handlers.
+    """
+    
+    def __init__(self, registry, start_object, settings=None):
+        self._registry = registry
         self._handler_stack = []
         self._depth_stack = []
         self._object = start_object
@@ -100,6 +131,8 @@ class SaxImportHandler(ContentHandler):
         handler.characters(chrs)
     
 class BaseHandler:
+    """Base class of all sub handlers.
+    """
     def __init__(self, parent, parent_handler, settings=None):
         # it is essential NOT to confuse self._parent and
         # self._parent_handler. The is the parent object as it is being
@@ -166,3 +199,29 @@ class BaseHandler:
     def characters(self, chrs):
         pass
 
+def importFromString(s, registry, start_object, settings=None):
+    """Import from string.
+
+    s - string with XML text
+    registry - import handler registry to use
+    start_object - object to attach everything to
+    settings - optional import settings object that can be inspected
+               by handlers.
+    """
+    f = StringIO(s)
+    importFromFile(f, registry, start_object, settings)
+    
+def importFromFile(f, registry, start_object, settings=None):
+    """Import from file object.
+
+    f - file object
+    registry - import handler registry to use
+    start_object - object to attach everything to
+    settings - optional import settings object that can be inspected
+               by handlers
+    """ 
+    handler = SaxImportHandler(registry, start_object, settings)
+    parser = xml.sax.make_parser()
+    parser.setFeature(feature_namespaces, 1)
+    parser.setContentHandler(handler)
+    parser.parse(f)
