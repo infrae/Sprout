@@ -2,9 +2,6 @@
 import unittest
 from sprout.saxext import xmlexport
 
-class MyXMLSource(xmlexport.BaseXMLSource):
-    pass
-
 class Foo:
     def __init__(self, bars):
         self._bars = bars
@@ -14,39 +11,39 @@ class Bar:
         self._data = data
         self._attr = attr
 
-class FooXMLSource(MyXMLSource):
+class FooProducer(xmlexport.BaseProducer):
     def sax(self):
         self.startElement('foo')
         for bar in self.context._bars:
             self.subsax(bar)
         self.endElement('foo')
 
-class BarXMLSource(MyXMLSource):
+class BarProducer(xmlexport.BaseProducer):
     def sax(self):
         self.startElement('bar', {'myattr': self.context._attr})
-        self.reader.characters(self.context._data)
+        self.handler.characters(self.context._data)
         self.endElement('bar')
         
 class XMLExportTestCase(unittest.TestCase):
     def setUp(self):
-        registry = xmlexport.XMLSourceRegistry(
+        exporter = xmlexport.Exporter(
             'http://www.infrae.com/ns/test')
-        registry.registerXMLSource(
-            Foo, FooXMLSource)
-        registry.registerXMLSource(
-            Bar, BarXMLSource)
-        self.registry = registry
+        exporter.registerProducer(
+            Foo, FooProducer)
+        exporter.registerProducer(
+            Bar, BarProducer)
+        self.exporter = exporter
 
     def test_export(self):
         tree = Foo([Bar('one', 'a'), Bar('two', 'b')])
         self.assertEquals(
             '<?xml version="1.0" encoding="utf-8"?>\n<foo xmlns="http://www.infrae.com/ns/test"><bar myattr="a">one</bar><bar myattr="b">two</bar></foo>',
-            self.registry.xmlToString(tree))
+            self.exporter.exportToString(tree))
 
 class Baz:
     pass
 
-class NSAttrSource(MyXMLSource):
+class NSAttrProducer(xmlexport.BaseProducer):
     def sax(self):
         self.startElement(
             'hm',
@@ -55,37 +52,35 @@ class NSAttrSource(MyXMLSource):
 
 class XMLExportNamespaceTestCase(unittest.TestCase):
     def setUp(self):
-        registry = xmlexport.XMLSourceRegistry(
+        exporter = xmlexport.Exporter(
             'http://www.infrae.com/ns/test')
-        registry.registerNamespace('test2',
+        exporter.registerNamespace('test2',
                                    'http://www.infrae.com/ns/test2')
-        registry.registerXMLSource(
-            Foo, FooXMLSource)
-        registry.registerXMLSource(
-            Baz, NSAttrSource)
-        self.registry = registry
+        exporter.registerProducer(
+            Foo, FooProducer)
+        exporter.registerProducer(
+            Baz, NSAttrProducer)
+        self.exporter = exporter
         
     def test_namespaced_attribute(self):
         tree = Foo([Baz()])
         self.assertEquals(
             '<?xml version="1.0" encoding="utf-8"?>\n<foo xmlns="http://www.infrae.com/ns/test" xmlns:test2="http://www.infrae.com/ns/test2"><hm test2:attr="value"></hm></foo>',
-            self.registry.xmlToString(tree))
+            self.exporter.exportToString(tree))
         
 
 class NoDefaultNamespaceTestCase(unittest.TestCase):
     def setUp(self):
-        registry = xmlexport.XMLSourceRegistry(None)
-        registry.registerXMLSource(
-            Foo, FooXMLSource)
-        registry.registerXMLSource(
-            Bar, BarXMLSource)
-        self.registry = registry
+        exporter = xmlexport.Exporter(None)
+        exporter.registerProducer(
+            Foo, FooProducer)
+        self.exporter = exporter
         
     def test_no_namespace_declaration(self):
         tree = Foo([])
         self.assertEquals(
             '<?xml version="1.0" encoding="utf-8"?>\n<foo></foo>',
-            self.registry.xmlToString(tree))
+            self.exporter.exportToString(tree))
         
 if __name__ == '__main__':
     unittest.main()

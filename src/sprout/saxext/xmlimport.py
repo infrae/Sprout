@@ -12,17 +12,22 @@ from StringIO import StringIO
 class XMLImportError(Exception):
     pass
 
-class ElementRegistry:
-    """An element registry which can be overridden while handling events.
+class Importer:
+    """A SAX based importer.
     """
     def __init__(self, handler_map=None):
+        """Create an importer.
+
+        The handler map is a mapping from element (ns, name) tuple to
+        import handler, which is a subclass of BaseHandler.
+        """
         self._mapping = {}
         if handler_map is not None:
             self.addHandlerMap(handler_map)
         self._stack = []
 
     # MANIPULATORS
-    
+
     def addHandlerMap(self, handler_map):
         """Add map of handlers for elements.
 
@@ -32,13 +37,83 @@ class ElementRegistry:
         for element, handler in handler_map.items():
             self._mapping[element] = [handler]
 
+    def importHandler(self, settings=None, result=None):
+        """Get import handler.
+
+        Useful when we are sending the SAX events directly, not from file.
+
+        settings - import settings object that can be inspected
+                   by handlers (optional)
+        result - initial result object to attach everything to (optional)
+
+        returns handler object. handler.result() gives the end result, or pass
+        initial result yourself.
+        """
+        return _SaxImportHandler(self, settings, result)
+
+    def importFromFile(self, f, settings=None, result=None):
+        """Import from file object.
+
+        f - file object
+        settings - import settings object that can be inspected
+                   by handlers (optional)
+        result - initial result object to attach everything to (optional)
+
+        returns top result object
+        """
+        self.clear()
+        handler = self.importHandler(settings, result)
+        parser = xml.sax.make_parser()
+        parser.setFeature(feature_namespaces, 1)
+        parser.setContentHandler(handler)
+        parser.parse(f)
+        return handler.result()
+
+    def importFromString(self, s, settings=None, result=None):
+        """Import from string.
+
+        s - string with XML text
+        settings - import settings object that can be inspected
+                   by handlers (optional)
+        result - initial result object to attach everything to (optional)
+
+        returns top result object
+        """
+        f = StringIO(s)
+        return self.importFromFile(f, settings, result)
+
+    def clear(self):
+        """Clear registry from any overrides.
+
+        Exceptions during import can leave the system in an
+        confused state (overrides still on stack). This restores
+        the initial conditions.
+        """
+        self._stack = []
+        mapping = {}
+        for key, value in self._mapping.items():
+            mapping[key] = [value[0]]
+        self._mapping = mapping
+
+    # ACCESSORS
     
-    def pushOverrides(self, overrides):
+
+    # PRIVATE
+
+    def _getHandler(self, element):
+        """Retrieve handler for a particular element (ns, name) tuple.
+        """
+        try:
+            return self._mapping[element][-1]
+        except KeyError:
+            return None
+
+    def _pushOverrides(self, overrides):
         """Push override handlers onto stack.
 
         Overrides provide new handlers for (existing) elements.
         Until popped again, the new handlers are used.
-
+       
         overrides - mapping with key is element tuple (ns, name),
                     value is handler instance.
         """
@@ -46,7 +121,7 @@ class ElementRegistry:
             self._pushOverride(element, handler)
         self._stack.append(overrides.keys())
       
-    def popOverrides(self):
+    def _popOverrides(self):
         """Pop overrides.
 
         Removes the overrides from the stack, restoring to previous
@@ -56,18 +131,6 @@ class ElementRegistry:
         for element in elements:
             self._popOverride(element)
 
-    # ACCESSORS
-    
-    def getXMLElementHandler(self, element):
-        """Retrieve handler for a particular element (ns, name) tuple.
-        """
-        try:
-            return self._mapping[element][-1]
-        except KeyError:
-            return None
-
-    # PRIVATE
-    
     def _pushOverride(self, element, handler):
         self._mapping.setdefault(element, []).append(handler)
 
@@ -76,13 +139,13 @@ class ElementRegistry:
         stack.pop()
         if not stack:
             del self._mapping[element]
-    
+            
 class _SaxImportHandler(ContentHandler):
     """Receives the SAX events and dispatches them to sub handlers.
     """
     
-    def __init__(self, registry, settings=None, result=None):
-        self._registry = registry
+    def __init__(self, importer, settings=None, result=None):
+        self._importer = importer
         self._handler_stack = []
         self._depth_stack = []
         self._depth = 0
@@ -97,7 +160,7 @@ class _SaxImportHandler(ContentHandler):
         pass    
 
     def startElementNS(self, name, qname, attrs):
-        factory = self._registry.getXMLElementHandler(name)
+        factory = self._importer._getHandler(name)
         if factory is None:
             handler = self._handler_stack[-1]
         else:
@@ -108,7 +171,7 @@ class _SaxImportHandler(ContentHandler):
                 parent_handler = None
                 result = self._result
             handler = factory(result, parent_handler, self._settings)
-            self._registry.pushOverrides(handler.getOverrides())
+            self._importer._pushOverrides(handler.getOverrides())
             self._handler_stack.append(handler)
             self._depth_stack.append(self._depth)
         handler.startElementNS(name, qname, attrs)
@@ -121,7 +184,7 @@ class _SaxImportHandler(ContentHandler):
             self._result = handler.result()
             self._handler_stack.pop()
             self._depth_stack.pop()
-            self._registry.popOverrides()
+            self._importer._popOverrides()
         handler.endElementNS(name, qname)
         
     def characters(self, chrs):
@@ -137,7 +200,9 @@ class _SaxImportHandler(ContentHandler):
         return self._outer_result or self._result
     
 class BaseHandler:
-    """Base class of all sub handlers.
+    """Base class of all handlers.
+
+    This should be subclassed to implement your own handlers. 
     """
     def __init__(self, parent, parent_handler, settings=None):
         """Initialize BaseHandler.
@@ -215,49 +280,3 @@ class BaseHandler:
         """
         return {}
 
-def importHandler(registry, settings=None, result=None):
-    """Get import handler.
-
-    Useful when we are sending the SAX events directly, not from file.
-
-    registry - import handler registry to use
-    settings - import settings object that can be inspected
-               by handlers (optional)
-    result - initial result object to attach everything to (optional)
-
-    returns handler object. handler.result() gives the end result, or pass
-    initial result yourself.
-    """
-    return _SaxImportHandler(registry, settings, result)
-    
-def importFromString(s, registry, settings=None, result=None):
-    """Import from string.
-
-    s - string with XML text
-    registry - import handler registry to use
-    settings - import settings object that can be inspected
-               by handlers (optional)
-    result - initial result object to attach everything to (optional)
-
-    returns top result object
-    """
-    f = StringIO(s)
-    return importFromFile(f, registry, settings, result)
-    
-def importFromFile(f, registry, settings=None, result=None):
-    """Import from file object.
-
-    f - file object
-    registry - import handler registry to use
-    settings - import settings object that can be inspected
-               by handlers (optional)
-    result - initial result object to attach everything to (optional)
-
-    returns top result object
-    """ 
-    handler = _SaxImportHandler(registry, settings, result)
-    parser = xml.sax.make_parser()
-    parser.setFeature(feature_namespaces, 1)
-    parser.setContentHandler(handler)
-    parser.parse(f)
-    return handler.result()

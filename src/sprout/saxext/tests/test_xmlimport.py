@@ -55,7 +55,7 @@ class AlphaHandler(xmlimport.BaseHandler):
         self.setResult(Alpha())
         self.parent().setAlpha(self.result())
 
-class AlphaSource(xmlexport.BaseSource):
+class AlphaProducer(xmlexport.BaseProducer):
     def sax(self):
         self.startElement('alpha')
         for obj in self.context.getSub():
@@ -67,10 +67,10 @@ class BetaHandler(xmlimport.BaseHandler):
         self.setResult(Beta(data))
         self.parent().appendSub(self.result())
 
-class BetaSource(xmlexport.BaseSource):
+class BetaProducer(xmlexport.BaseProducer):
     def sax(self):
         self.startElement('beta')
-        self.reader.characters(self.context.getValue())
+        self.handler.characters(self.context.getValue())
         self.endElement('beta')
         
 class GammaHandler(xmlimport.BaseHandler):
@@ -78,7 +78,7 @@ class GammaHandler(xmlimport.BaseHandler):
         self.setResult(Gamma(attrs[(None, 'value')]))
         self.parent().appendSub(self.result())
 
-class GammaSource(xmlexport.BaseSource):
+class GammaProducer(xmlexport.BaseProducer):
     def sax(self):
         self.startElement('gamma', {'value':self.context.getValue()})
         self.endElement('gamma')
@@ -93,7 +93,7 @@ class DeltaHandler(xmlimport.BaseHandler):
     def endElementNS(self, name, qname):
         self.parent().appendSub(self.result())
 
-class DeltaSource(xmlexport.BaseSource):
+class DeltaProducer(xmlexport.BaseProducer):
     def sax(self):
         self.startElement('delta', {'attr': self.context.getValue()})
         self.subsax(self.context.getExtra())
@@ -106,7 +106,7 @@ class SubBetaHandler(xmlimport.BaseHandler):
 
 class XMLImportTestCase(unittest.TestCase):
     def setUp(self):
-        self._registry = xmlimport.ElementRegistry({
+        self._importer = xmlimport.Importer({
             (None, 'alpha'): AlphaHandler,
             (None, 'beta') : BetaHandler,
             (None, 'gamma') : GammaHandler,
@@ -125,7 +125,7 @@ class XMLImportTestCase(unittest.TestCase):
 
     def test_import(self):
         result = Doc()
-        xmlimport.importFromString(self.xml, self._registry, result=result)
+        self._importer.importFromString(self.xml, result=result)
         self.assert_(result.getAlpha() is not None)
         self.assertEquals(5, len(result.getAlpha().getSub()))
         sub = result.getAlpha().getSub()
@@ -140,8 +140,8 @@ class XMLImportTestCase(unittest.TestCase):
         # check whether result from the function is the same as
         # result we pass int
         result = Doc()
-        call_result = xmlimport.importFromString(
-            self.xml, self._registry, result=result)
+        call_result = self._importer.importFromString(
+            self.xml, result=result)
         self.assertEquals(result, call_result)
         
     
@@ -152,7 +152,7 @@ class NoStartObjectAlphaHandler(xmlimport.BaseHandler):
 class NoStartObjectImportTestCase(unittest.TestCase):
     
     def setUp(self):
-        self._registry = xmlimport.ElementRegistry({
+        self._importer = xmlimport.Importer({
             (None, 'alpha'): NoStartObjectAlphaHandler,
             (None, 'beta') : BetaHandler,
             (None, 'gamma') : GammaHandler,
@@ -169,7 +169,7 @@ class NoStartObjectImportTestCase(unittest.TestCase):
    <delta attr="Five"><beta>Six</beta></delta>
 </alpha>
 '''
-        result = xmlimport.importFromString(xml, self._registry)
+        result = self._importer.importFromString(xml)
         self.assertEquals(5, len(result.getSub()))
         sub = result.getSub()
         self.assertEquals('One', sub[0].getValue())
@@ -181,22 +181,22 @@ class NoStartObjectImportTestCase(unittest.TestCase):
 
 class ImportExportTestCase(unittest.TestCase):
     def setUp(self):
-        self._registry = xmlimport.ElementRegistry({
+        self._importer = xmlimport.Importer({
             (None, 'alpha'): NoStartObjectAlphaHandler,
             (None, 'beta') : BetaHandler,
             (None, 'gamma') : GammaHandler,
             (None, 'delta') : DeltaHandler
             })
         
-        self._exportregistry = xmlexport.XMLSourceRegistry(None)
-        self._exportregistry.registerXMLSource(
-            Alpha, AlphaSource)
-        self._exportregistry.registerXMLSource(
-            Beta, BetaSource)
-        self._exportregistry.registerXMLSource(
-            Gamma, GammaSource)
-        self._exportregistry.registerXMLSource(
-            Delta, DeltaSource)
+        self._exporter = xmlexport.Exporter(None)
+        self._exporter.registerProducer(
+            Alpha, AlphaProducer)
+        self._exporter.registerProducer(
+            Beta, BetaProducer)
+        self._exporter.registerProducer(
+            Gamma, GammaProducer)
+        self._exporter.registerProducer(
+            Delta, DeltaProducer)
         
         self._xml = '''\
 <alpha>
@@ -208,11 +208,27 @@ class ImportExportTestCase(unittest.TestCase):
 </alpha>
 '''
 
-    def test_import_export(self):
-        result = xmlimport.importFromString(self._xml, self._registry)
-        first_xml = self._exportregistry.xmlToString(result)
-        result = xmlimport.importFromString(first_xml, self._registry)
-        second_xml = self._exportregistry.xmlToString(result)
+    def test_import_export_text(self):
+        result = self._importer.importFromString(self._xml)
+        first_xml = self._exporter.exportToString(result)
+        result = self._importer.importFromString(first_xml)
+        second_xml = self._exporter.exportToString(result)
+        self.assertEquals(first_xml, second_xml)
+
+    def test_import_export_direct(self):
+        # directly send producer to handler
+
+        # first do import
+        tree = self._importer.importFromString(self._xml)
+        # get normalized XML
+        first_xml = self._exporter.exportToString(tree)
+        # now export, immediately reimporting again
+        handler = self._importer.importHandler()
+        self._exporter.exportToSax(tree, handler)
+        # we should have result in handler now
+        new_tree = handler.result()
+        # create XML for it so we can compare it
+        second_xml = self._exporter.exportToString(new_tree)
         self.assertEquals(first_xml, second_xml)
         
 if __name__ == '__main__':
