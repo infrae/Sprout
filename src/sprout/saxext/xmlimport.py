@@ -81,26 +81,20 @@ class _SaxImportHandler(ContentHandler):
     """Receives the SAX events and dispatches them to sub handlers.
     """
     
-    def __init__(self, registry, start_object, settings=None):
+    def __init__(self, registry, settings=None, result=None):
         self._registry = registry
         self._handler_stack = []
         self._depth_stack = []
-        self._object = start_object
-        self._settings = settings
-        # XXX Might need this later for context sensitive parsing
         self._depth = 0
+        self._result = result
+        self._settings = settings
         
     def startDocument(self):
-        # XXX probably some export metadata should be read and handled here.
-        # Export will have some configuration options that may impact the
-        # import process.
-        # XXX maybe handle encoding?
         pass 
     
     def endDocument(self):
-        # XXX finalization
-        pass
-    
+        pass    
+
     def startElementNS(self, name, qname, attrs):
         factory = self._registry.getXMLElementHandler(name)
         if factory is None:
@@ -108,11 +102,11 @@ class _SaxImportHandler(ContentHandler):
         else:
             if self._handler_stack:
                 parent_handler = self._handler_stack[-1]
-                object = parent_handler.result()
+                result = parent_handler.result()
             else:
                 parent_handler = None
-                object = self._object
-            handler = factory(object, parent_handler, self._settings)
+                result = self._result
+            handler = factory(result, parent_handler, self._settings)
             self._registry.pushOverrides(handler.getOverrides())
             self._handler_stack.append(handler)
             self._depth_stack.append(self._depth)
@@ -123,6 +117,7 @@ class _SaxImportHandler(ContentHandler):
         self._depth -= 1
         handler = self._handler_stack[-1]
         if self._depth == self._depth_stack[-1]:
+            self._result = handler.result()
             self._handler_stack.pop()
             self._depth_stack.pop()
             self._registry.popOverrides()
@@ -131,6 +126,9 @@ class _SaxImportHandler(ContentHandler):
     def characters(self, chrs):
         handler = self._handler_stack[-1]
         handler.characters(chrs)
+
+    def result(self):
+        return self._result
     
 class BaseHandler:
     """Base class of all sub handlers.
@@ -211,29 +209,49 @@ class BaseHandler:
         """
         return {}
 
-def importFromString(s, registry, start_object, settings=None):
+def importHandler(registry, settings=None, result=None):
+    """Get import handler.
+
+    Useful when we are sending the SAX events directly, not from file.
+
+    registry - import handler registry to use
+    settings - import settings object that can be inspected
+               by handlers (optional)
+    result - initial result object to attach everything to (optional)
+
+    returns handler object. handler.result() gives the end result, or pass
+    initial result yourself.
+    """
+    return _SaxImportHandler(registry, settings, result)
+    
+def importFromString(s, registry, settings=None, result=None):
     """Import from string.
 
     s - string with XML text
     registry - import handler registry to use
-    start_object - object to attach everything to
-    settings - optional import settings object that can be inspected
-               by handlers.
+    settings - import settings object that can be inspected
+               by handlers (optional)
+    result - initial result object to attach everything to (optional)
+
+    returns top result object
     """
     f = StringIO(s)
-    importFromFile(f, registry, start_object, settings)
+    return importFromFile(f, registry, settings, result)
     
-def importFromFile(f, registry, start_object, settings=None):
+def importFromFile(f, registry, settings=None, result=None):
     """Import from file object.
 
     f - file object
     registry - import handler registry to use
-    start_object - object to attach everything to
-    settings - optional import settings object that can be inspected
-               by handlers
+    settings - import settings object that can be inspected
+               by handlers (optional)
+    result - initial result object to attach everything to (optional)
+
+    returns top result object
     """ 
-    handler = _SaxImportHandler(registry, start_object, settings)
+    handler = _SaxImportHandler(registry, settings, result)
     parser = xml.sax.make_parser()
     parser.setFeature(feature_namespaces, 1)
     parser.setContentHandler(handler)
     parser.parse(f)
+    return handler.result()

@@ -90,7 +90,7 @@ class XMLImportTestCase(unittest.TestCase):
             })
     
     def test_import(self):
-        xml1 = '''\
+        xml = '''\
 <alpha>
    <beta>One</beta>
    <gamma value="Two" />
@@ -100,7 +100,7 @@ class XMLImportTestCase(unittest.TestCase):
 </alpha>
 '''
         result = Doc()
-        xmlimport.importFromString(xml1, self._registry, result)
+        xmlimport.importFromString(xml, self._registry, result=result)
         self.assert_(result.getAlpha() is not None)
         self.assertEquals(5, len(result.getAlpha().getSub()))
         sub = result.getAlpha().getSub()
@@ -110,7 +110,41 @@ class XMLImportTestCase(unittest.TestCase):
         self.assertEquals('Four', sub[3].getValue())
         self.assertEquals('Five', sub[4].getValue())
         self.assertEquals('Six', sub[4].getExtra().getValue())
-        
+
+class NoStartObjectAlphaHandler(xmlimport.BaseHandler):
+    def startElementNS(self, name, qname, attrs):
+        self.setResult(Alpha())
+       
+class NoStartObjectImportTestCase(unittest.TestCase):
+    
+    def setUp(self):
+        self._registry = xmlimport.ElementRegistry({
+            (None, 'alpha'): NoStartObjectAlphaHandler,
+            (None, 'beta') : BetaHandler,
+            (None, 'gamma') : GammaHandler,
+            (None, 'delta') : DeltaHandler
+            })
+    
+    def test_import(self):
+        xml = '''\
+<alpha>
+   <beta>One</beta>
+   <gamma value="Two" />
+   <beta>Three</beta>
+   <gamma value="Four" />
+   <delta attr="Five"><beta>Six</beta></delta>
+</alpha>
+'''
+        result = xmlimport.importFromString(xml, self._registry)
+        self.assertEquals(5, len(result.getSub()))
+        sub = result.getSub()
+        self.assertEquals('One', sub[0].getValue())
+        self.assertEquals('Two', sub[1].getValue())
+        self.assertEquals('Three', sub[2].getValue())
+        self.assertEquals('Four', sub[3].getValue())
+        self.assertEquals('Five', sub[4].getValue())
+        self.assertEquals('Six', sub[4].getExtra().getValue())
+
 if __name__ == '__main__':
     unittest.main()
     
