@@ -26,12 +26,6 @@ class BaseSettings:
         """
         return self._outputEncoding
 
-class BaseData:
-    """Base class of data that can be set or changed by the export.
-    
-    Subclass this for custom data objects.
-    """
-    
 # null settings contains the default settings
 NULL_SETTINGS = BaseSettings()
 
