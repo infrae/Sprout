@@ -98,23 +98,7 @@ class TagFilter:
             m = attrfind.match(rawdata, k)
             if not m:
                 break
-            attrname = m.group(1) #, rest, attrvalue = m.group(1, 2, 3)
-            #if not rest:
-            #    attrvalue = None
-            #elif (attrvalue[0] == "'" == attrvalue[-1] or
-            #      attrvalue[0] == '"' == attrvalue[-1]):
-            #    attrvalue = attrvalue[1:-1]
-            #    attrvalue = self.unescape(attrvalue)
+            attrname = m.group(1)
             result.append(attrname.lower())
             k = m.end()
         return result
-    
-    def unescape(self, s):
-        if '&' not in s:
-            return s
-        s = s.replace("&lt;", "<")
-        s = s.replace("&gt;", ">")
-        s = s.replace("&apos;", "'")
-        s = s.replace("&quot;", '"')
-        s = s.replace("&amp;", "&") # Must be last
-        return s
