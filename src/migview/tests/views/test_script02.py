@@ -1,2 +1,0 @@
-##parameters=test
-return test

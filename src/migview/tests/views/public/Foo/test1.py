@@ -1,1 +1,0 @@
-return 'Foo/test1'
