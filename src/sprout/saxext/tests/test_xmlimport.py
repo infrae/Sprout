@@ -1,6 +1,9 @@
 import unittest
+import os.path
 
 from sprout.saxext import xmlimport, xmlexport
+
+_testdir = os.path.split(__file__)[0]
 
 class Doc:
     def __init__(self):
@@ -78,6 +81,13 @@ class GammaHandler(xmlimport.BaseHandler):
         self.setResult(Gamma(attrs[(None, 'value')]))
         self.parent().appendSub(self.result())
 
+class GammaLocatingHandler(xmlimport.BaseHandler):
+    def startElementNS(self, name, qname, attrs):
+        locator = self.getDocumentLocator()
+        self.setResult((locator.getLineNumber(),
+            locator.getColumnNumber(),))
+        self.parent().appendSub(self.result())
+
 class GammaProducer(xmlexport.BaseProducer):
     def sax(self):
         self.startElement('gamma', {'value':self.context.getValue()})
@@ -113,6 +123,13 @@ class XMLImportTestCase(unittest.TestCase):
             (None, 'delta') : DeltaHandler
             })
 
+        self._locating_importer = xmlimport.Importer({
+            (None, 'alpha'): AlphaHandler,
+            (None, 'beta') : BetaHandler,
+            (None, 'gamma') : GammaLocatingHandler,
+            (None, 'delta') : DeltaHandler
+            })
+
         self.xml = '''\
 <alpha>
    <beta>One</beta>
@@ -123,7 +140,7 @@ class XMLImportTestCase(unittest.TestCase):
 </alpha>
 '''
 
-    def test_import(self):
+    def test_importFromString(self):
         result = Doc()
         self._importer.importFromString(self.xml, result=result)
         self.assert_(result.getAlpha() is not None)
@@ -136,6 +153,22 @@ class XMLImportTestCase(unittest.TestCase):
         self.assertEquals('Five', sub[4].getValue())
         self.assertEquals('Six', sub[4].getExtra().getValue())
         
+    def test_importFromFileWithLocator(self):
+        result = Doc()
+        self._locating_importer.importFromFile(os.path.join(_testdir, 'alpha.xml'), result=result)
+        sub = result.getAlpha().getSub()
+        line_number, col_count = sub[3]
+        self.assertEquals(line_number, 5)
+        self.assertEquals(col_count, 3)
+
+    def test_importFromStringWithLocator(self):
+        result = Doc()
+        self._locating_importer.importFromString(self.xml, result=result)
+        sub = result.getAlpha().getSub()
+        line_number, col_count = sub[3]
+        self.assertEquals(line_number, 5)
+        self.assertEquals(col_count, 3)
+
     def test_resultIsResult(self):
         # check whether result from the function is the same as
         # result we pass int

@@ -1,0 +1,7 @@
+<alpha>
+   <beta>One</beta>
+   <gamma value="Two" />
+   <beta>Three</beta>
+   <gamma value="Four" />
+   <delta attr="Five"><beta>Six</beta></delta>
+</alpha>
