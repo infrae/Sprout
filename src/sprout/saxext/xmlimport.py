@@ -29,11 +29,15 @@ class BaseSettings:
 
     Subclass this for custom settings objects.
     """
+    def __init__(self, ignore_not_allowed=False):
+        self._ignore_not_allowed = ignore_not_allowed
+        
     def ignoreNotAllowed(self):
-        return False
-
+        return self._ignore_not_allowed
+    
 # null settings contains the default settings
 NULL_SETTINGS = BaseSettings()
+IGNORE_SETTINGS = BaseSettings(ignore_not_allowed=True)
 
 class Importer:
     """A SAX based importer.

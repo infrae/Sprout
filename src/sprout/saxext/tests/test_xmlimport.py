@@ -314,12 +314,6 @@ class RBHandler(BHandler):
 class RCHandler(CHandler):
     pass
 
-class IgnoreSettings(xmlimport.BaseSettings):
-    def ignoreNotAllowed(self):
-        return True
-
-IGNORE_SETTINGS = IgnoreSettings()
-
 class NotAllowedTestCase(unittest.TestCase):
     def setUp(self):
         self._importer = xmlimport.Importer({
@@ -358,15 +352,17 @@ class NotAllowedTestCase(unittest.TestCase):
                           result=Container())
 
     def test_element_not_allowed_ignore(self):
-        result = self._rimporter.importFromString('<a><c></c></a>',
-                                                  settings=IGNORE_SETTINGS,
-                                                  result=Container())
+        result = self._rimporter.importFromString(
+            '<a><c></c></a>',
+            settings=xmlimport.IGNORE_SETTINGS,
+            result=Container())
         self.assertEquals(0, len(result.children[0].children))
 
     def test_element_not_allowed_ignore2(self):
-        result = self._rimporter.importFromString('<a><c><b></b></c><b/></a>',
-                                                  settings=IGNORE_SETTINGS,
-                                                  result=Container())
+        result = self._rimporter.importFromString(
+            '<a><c><b></b></c><b/></a>',
+            settings=xmlimport.IGNORE_SETTINGS,
+            result=Container())
         self.assertEquals(1, len(result.children[0].children))
         self.assertEquals(B, type(result.children[0].children[0]))
 
@@ -385,7 +381,7 @@ class NotAllowedTestCase(unittest.TestCase):
     def test_element_not_allowed_ignore3(self):
         result = self._rimporter.importFromString(
             '<a><a><c/></a><b><c/></b></a>',
-            settings=IGNORE_SETTINGS,
+            settings=xmlimport.IGNORE_SETTINGS,
             result=Container())
         self.assertEquals(2, len(result.children[0].children))
         # in a sub element we can find nothing
@@ -397,7 +393,7 @@ class NotAllowedTestCase(unittest.TestCase):
     def test_element_not_allowed_ignore4(self):
         result = self._rimporter.importFromString(
             '<a><c><hoi/><dag/><a><b></b></a></c></a>',
-            settings=IGNORE_SETTINGS,
+            settings=xmlimport.IGNORE_SETTINGS,
             result=Container())
         self.assertEquals(0, len(result.children[0].children))
         
