@@ -47,6 +47,16 @@ class SubsetTestCase(unittest.TestCase):
             '<p><link url="http://www.infrae.com">Infrae</link></p>',
             self.parse('<a href="http://www.infrae.com">Infrae</a>'))
 
+    def test_link_markup(self):
+        self.assertEquals(
+            '<p><link url="http://www.infrae.com">The <strong>Infrae</strong> way</link></p>',
+            self.parse('<a href="http://www.infrae.com">The <b>Infrae</b> way</a>'))
+
+    def test_link_markup2(self):
+        self.assertEquals(
+            '<p><link url="http://www.infrae.com">Foo</link></p>',
+            self.parse('<a href="http://www.infrae.com">Foo<a href="foo">Bar</a></a>'))
+
     def test_index(self):
         self.assertEquals(
             '<p><index name="Foo"></index></p>',
@@ -73,6 +83,11 @@ class SubsetTestCase(unittest.TestCase):
         self.assertEquals(
             '<p>Foo<br></br>Bar</p>',
             self.parse('Foo<br><i>Hoi<b>Baz</b></i></br>Bar'))
+
+    def test_br_evil4(self):
+        self.assertEquals(
+            '<p>Foo<br></br>Bar</p>',
+            self.parse('Foo<br>Hoi</br>Bar'))
 
 def test_suite():
     suite = unittest.TestSuite()

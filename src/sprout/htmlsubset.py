@@ -94,7 +94,12 @@ class SubsetHandler(xmlimport.BaseHandler):
         return self.settings().getSubset(self.tagName).getIgnoreOverrides()
         
 class AHandler(xmlimport.BaseHandler):
-    
+    def isElementAllowed(self, name):
+        try:
+            return MARKUP_TEXT_TRANSLATION[name[1]] in MARKUP_TEXT_BR
+        except KeyError:
+            return False
+        
     def startElementNS(self, name, qname, attrs):
         node = self.parent()
         child = node.ownerDocument.createElement('link')
@@ -107,6 +112,9 @@ class AHandler(xmlimport.BaseHandler):
         node.appendChild(node.ownerDocument.createTextNode(data))
 
 class IndexHandler(xmlimport.BaseHandler):
+    def isElementAllowed(self, name):
+        return False
+    
     def startElementNS(self, name, qname, attrs):
         node = self.parent()
         child = node.ownerDocument.createElement('index')
