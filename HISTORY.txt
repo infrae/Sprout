@@ -1,3 +1,9 @@
+in development
+--------------
+
+* set sprout up as a Python package in a much simpler, and less wrong
+  way.
+
 0.6.1
 -----
 
