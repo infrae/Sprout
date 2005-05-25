@@ -1,1 +1,1 @@
-Sprout 0.6.2
+Sprout 0.7 (CVS/UNRELEASED)
