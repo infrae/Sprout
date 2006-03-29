@@ -1,6 +1,9 @@
 in development
 --------------
 
+* Added support for hex entities (e.g. &#xa0; for a non-breaking space) to
+  html2sax.
+
 0.6.2
 -----
 
