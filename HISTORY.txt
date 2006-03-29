@@ -1,8 +1,11 @@
-in development
---------------
+0.7 (unreleased)
+----------------
 
 * Added support for hex entities (e.g. &#xa0; for a non-breaking space) to
   html2sax.
+
+* Added support for 'limiting' HTML, taking safe, well-formed snippets out
+  of larger HTML strings. Can deal with HTML that is not well-formed.
 
 0.6.2
 -----
