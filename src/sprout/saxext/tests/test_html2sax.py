@@ -46,7 +46,12 @@ class HTML2SaxTestCase(unittest.TestCase):
         self.assertEquals(
             u'<b>é</b>',
             makeXML('<b>&#233;</b>'))
-        
+
+    def test_unicode_entities_hex(self):
+        self.assertEquals(
+            u'<b>é</b>',
+            makeXML('<b>&#xe9;</b>'))
+
     def test_unknown_entities(self):
         self.assertEquals(
             '<b> </b>',

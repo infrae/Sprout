@@ -105,8 +105,14 @@ class Html2SaxParser(HTMLParser):
         
     def handle_charref(self, name):
         # &#...; direct unicode codepoint
+        if name.startswith('x'):
+            # hex value
+            value = int(name[1:], 16)
+        else:
+            # normal int
+            value = int(name)
         try:
-            c = unichr(int(name))
+            c = unichr(value)
         except ValueError:
             # can't handle this, ignore
             return
