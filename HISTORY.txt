@@ -1,5 +1,5 @@
-0.7 (unreleased)
-----------------
+0.7
+---
 
 * Added support for hex entities (e.g. &#xa0; for a non-breaking space) to
   html2sax.
