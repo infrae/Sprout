@@ -45,7 +45,7 @@ def createParagraphSubset():
         htmlsubset.Element('acronym', [], ['title'],
                            MARKUP_TEXT_BR, AcronymHandler))
     subset.registerElement(
-        htmlsubset.Element('index', [], [], [], IndexHandler))
+        htmlsubset.Element('index', ['name'], ['title'], [], IndexHandler))
     subset.registerElement(
         htmlsubset.Element('br', [], [], [], BrHandler))
     # 'block' tag is used to produce fake surrounding tag, real one will
@@ -137,23 +137,14 @@ class AcronymHandler(htmlsubset.SubsetHandler):
 class IndexHandler(htmlsubset.SubsetHandler):
     parsed_name = 'index'
     
-    def __init__(self, parent, parent_handler,
-                 settings=xmlimport.NULL_SETTINGS, info=None):
-        super(IndexHandler, self).__init__(parent, parent_handler,
-                                           settings, info)
-        self._data = []
-    
     def startElementNS(self, name, qname, attrs):
         node = self.parent()
         child = node.ownerDocument.createElement('index')
+        child.setAttribute('name', attrs[(None, 'name')])
+        if attrs.has_key((None, 'title')):
+            child.setAttribute('title', attrs[(None, 'title')])
         node.appendChild(child)
         self.setResult(child)
-
-    def characters(self, data):
-        self._data.append(data)
-        
-    def endElementNS(self, name, qname):
-        self.result().setAttribute('name', ''.join(self._data))
         
 class BrHandler(htmlsubset.SubsetHandler):
     parsed_name = 'br'
