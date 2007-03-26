@@ -1,1 +1,2 @@
-Sprout 0.8 (SVN/Unreleased)
+Sprout 0.8
+
