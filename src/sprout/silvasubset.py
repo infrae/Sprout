@@ -36,7 +36,7 @@ def createParagraphSubset():
         element = htmlsubset.Element(name, [], [], MARKUP, handler)
         subset.registerElement(element)
     subset.registerElement(
-        htmlsubset.Element('a', ['href'], ['target'],
+        htmlsubset.Element('a', ['href'], ['target','title'],
                            MARKUP_TEXT_BR, AHandler))
     subset.registerElement(
         htmlsubset.Element('abbr', [], ['title'],
@@ -62,7 +62,7 @@ def createHeadingSubset():
         element = htmlsubset.Element(name, [], [], MARKUP_HEADING, handler)
         subset.registerElement(element)
     subset.registerElement(
-        htmlsubset.Element('a', ['href'], ['target'],
+        htmlsubset.Element('a', ['href'], ['target','title'],
                            MARKUP_BASE, AHandler))
     subset.registerElement(
         htmlsubset.Element('index', [], [], [], IndexHandler))
