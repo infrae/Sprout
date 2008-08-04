@@ -1,1 +1,1 @@
-Sprout 0.9 (unreleased)
+Sprout 0.9
