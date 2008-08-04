@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.3
 #
 # SchoolTool - common information systems platform for school administration
-# Copyright (c) 2003 Shuttleworth Foundation
+# Copyright (c) 2003-2008 Shuttleworth Foundation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
