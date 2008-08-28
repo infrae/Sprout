@@ -1,5 +1,5 @@
 Sprout is copyright Infrae and distributed under the BSD license (see
-doc/licenses/BSD.txt), with the following exceptions:
+docs/licenses/BSD.txt), with the following exceptions:
 
 test.py, the test-runner script, is GPL and copyright Shuttleworth
 Foundation. See doc/licenses/GPL.txt. It is believed the unchanged
@@ -11,4 +11,4 @@ sprout.tagfilter contains regular expressions from the HTMLParser
 module in the Python standard library. sprout.saxext.generator is an
 improved version of the generator in the Python standard
 library. These are copyright PSF and come under the Python license,
-detailed in doc/licenses/PythonLicense.txt.
+detailed in docs/licenses/PythonLicense.txt.
