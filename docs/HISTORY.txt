@@ -1,24 +1,32 @@
+Changes
+=======
+
+1.0 (unreleased)
+----------------
+
+* Package extension as an egg.
+
 0.9
 ---
 
-* When title attributes are added to <a> tags, they are now recognized
-  but nothing is done with them.  Previously, the presence of a 'title'
-  attribute corrupted the link.
-  
+* When title attributes are added to ``<a>`` tags, they are now
+  recognized but nothing is done with them.  Previously, the presence
+  of a 'title' attribute corrupted the link.
 
 0.8
 ---
 
-* no changes logged
+* no changes logged.
 
 0.7
 ---
 
-* Added support for hex entities (e.g. &#xa0; for a non-breaking space) to
-  html2sax.
+* Added support for hex entities (e.g. ``&#xa0;`` for a non-breaking
+  space) ``to html2sax``.
 
-* Added support for 'limiting' HTML, taking safe, well-formed snippets out
-  of larger HTML strings. Can deal with HTML that is not well-formed.
+* Added support for *limiting* HTML, taking safe, well-formed snippets
+  out of larger HTML strings. Can deal with HTML that is not
+  well-formed.
 
 0.6.2
 -----
@@ -29,13 +37,14 @@
 0.6.1
 -----
 
-* sax2html handles empty attributes in HTML now, so that <option selected>
-  gets turned into <option selected="selected">
+* ``sax2html`` handles empty attributes in HTML now, so that ``<option
+  selected>`` gets turned into ``<option selected="selected">``.
 
 0.6
 ---
 
-* in Silva subset, accept nested <b>, <i> and <a href=""> in those.
+* in Silva subset, accept nested ``<b>``, ``<i>`` and ``<a href="">``
+  in those.
 
 * Allow optional filtering handler that events get passed through before
   import happens.
@@ -43,12 +52,13 @@
 0.5.1
 -----
 
-* In silva subset, treat \n as <br>
+* In silva subset, treat ``\n`` as ``<br>``.
 
-* In html2sax, we're now making sure that any tags that cannot be singletons
-  in HTML are kept open, by adding an extra space character event.
+* In ``html2sax``, we're now making sure that any tags that cannot be
+  singletons in HTML are kept open, by adding an extra space character
+  event.
 
 0.5
 ---
 
-Initial public release.
+* Initial public release.

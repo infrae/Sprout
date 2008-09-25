@@ -1,3 +1,6 @@
+Sprout
+======
+
 This is a common Python library which contains reusable components,
 developed at Infrae.
 
@@ -20,7 +23,8 @@ well.
 
 Sprout's focus is mainly currently XML related. It features:
 
-* sprout.saxext, a library to make writing SAX-based code more easy.
+* ``sprout.saxext``, a library to make writing SAX-based code more
+  easy.
 
-* htmlsubset, a system to easily create HTML-ish subsets that are
+* ``htmlsubset``, a system to easily create HTML-ish subsets that are
   secure and robust to wrong user input.
