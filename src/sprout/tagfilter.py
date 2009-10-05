@@ -1,4 +1,9 @@
-import re, sets
+import re
+try:
+    set
+except NameError:
+    from sets import Set as set
+
 from htmlentitydefs import name2codepoint
 from sprout.blockedrange import Ranges
 
@@ -47,8 +52,8 @@ class TagFilter:
     def registerElement(self, name,
                         attribute_names=None,
                         optional_attribute_names=None):
-        attribute_names = sets.Set(attribute_names or [])
-        optional_attribute_names = sets.Set(optional_attribute_names or [])
+        attribute_names = set(attribute_names or [])
+        optional_attribute_names = set(optional_attribute_names or [])
         all_attribute_names = attribute_names.union(optional_attribute_names)
         self._elements[name] = attribute_names, all_attribute_names
         
@@ -75,7 +80,7 @@ class TagFilter:
                 m = start_tag_re.match(s, index)
                 if m is not None:
                     # but only if attributes are the same
-                    text_attrnames = sets.Set(
+                    text_attrnames = set(
                         self.attribute_names(s, m.start(), m.end()))
                     # must have all required attribute names and
                     # be a subset of all possible attribute names

@@ -4,7 +4,7 @@ Changes
 1.1 (unreleased)
 ----------------
 
-* ...
+* Use builtin set instead of the deprecated sets module (when available).
 
 1.0 (25/09/2008)
 ----------------

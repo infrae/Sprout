@@ -11,7 +11,11 @@ that case 'does its best' to produce a sane DOM tree.
 
 from sprout import tagfilter
 from sprout.saxext import xmlimport, html2sax, collapser
-import sets
+try:
+    set
+except NameError:
+    from sets import Set as set
+
 
 class Subset:
     """A subset consists of known elements.
@@ -60,7 +64,7 @@ class Element:
         self._name = name
         self._required_attributes = required_attributes
         self._optional_attributes = optional_attributes
-        self._subelements = sets.Set(subelements)
+        self._subelements = set(subelements)
         self._handler = handler
         
     def getName(self):
