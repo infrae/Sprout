@@ -1,8 +1,8 @@
 Changes
 =======
 
-1.1 (unreleased)
-----------------
+1.0.1 (05/10/2009)
+------------------
 
 * Use builtin set instead of the deprecated sets module (when available).
 
