@@ -59,7 +59,6 @@ class MappingStack:
         """Retrieve handler for a particular element (ns, name) tuple.
         """
         try:
-            print type(self.__mapping)
             return self.__mapping[element][-1]
         except KeyError:
             return None
