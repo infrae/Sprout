@@ -43,6 +43,68 @@ class BaseSettings(object):
 NULL_SETTINGS = BaseSettings()
 IGNORE_SETTINGS = BaseSettings(ignore_not_allowed=True)
 
+class MappingStack:
+    """A runtime stack for content handlers
+    
+    It wraps a Importer mapping and provides overrides.
+    """
+
+    def __init__(self, mapping):
+        """Initialize handlers/content mapping from the importer
+        """
+        self.__mapping = mapping
+        self.__stack = []
+    
+    def getHandler(self, element):
+        """Retrieve handler for a particular element (ns, name) tuple.
+        """
+        try:
+            print type(self.__mapping)
+            return self.__mapping[element][-1]
+        except KeyError:
+            return None
+
+    def pushOverrides(self, overrides):
+        """Push override handlers onto stack.
+
+        Overrides provide new handlers for (existing) elements.
+        Until popped again, the new handlers are used.
+       
+        overrides - mapping with key is element tuple (ns, name),
+                    value is handler instance.
+        """
+        for element, handler in overrides.items():
+            self.pushOverride(element, handler)
+        self.__stack.append(overrides.keys())
+
+    def pushOverridesAll(self, handler):
+        """Push special handler for all overrides.
+        """
+        keys = self.__mapping.keys()
+        for element in keys:
+            self.pushOverride(element, handler)
+        self.__stack.append(keys)
+        
+    def popOverrides(self):
+        """Pop overrides.
+
+        Removes the overrides from the stack, restoring to previous
+        state.
+        """
+        elements = self.__stack.pop()
+        for element in elements:
+            self.popOverride(element)
+
+    def pushOverride(self, element, handler):
+        self.__mapping.setdefault(element, []).append(handler)
+
+    def popOverride(self, element):
+        stack = self.__mapping[element]
+        stack.pop()
+        if not stack:
+            del self.__mapping[element]
+
+
 class Importer:
     """A SAX based importer.
     """
@@ -55,9 +117,11 @@ class Importer:
         self._mapping = {}
         if handler_map is not None:
             self.addHandlerMap(handler_map)
-        self._stack = []
         
     # MANIPULATORS
+
+    def getMapping(self):
+        return self._mapping.copy()
 
     def addHandlerMap(self, handler_map):
         """Add map of handlers for elements.
@@ -91,8 +155,11 @@ class Importer:
         returns handler object. handler.result() gives the end result, or pass
         initial result yourself.
         """
-        return _SaxImportHandler(self, settings, result, info)
-   
+        return _SaxImportHandler(MappingStack(self.getMapping()),
+                                 settings,
+                                 result,
+                                 info)
+
     def importFromFile(self, f, settings=NULL_SETTINGS,
                        result=None, info=None):
         """Import from file object.
@@ -106,7 +173,6 @@ class Importer:
         
         returns top result object
         """
-        self.clear()
         handler = self.importHandler(settings, result, info)
         parser = xml.sax.make_parser()
         parser.setFeature(feature_namespaces, 1)
@@ -133,79 +199,15 @@ class Importer:
         """
         f = StringIO(s)
         return self.importFromFile(f, settings, result, info)
-
-    def clear(self):
-        """Clear registry from any overrides.
-
-        Exceptions during import can leave the system in an
-        confused state (overrides still on stack). This restores
-        the initial conditions.
-        """
-        self._stack = []
-        mapping = {}
-        for key, value in self._mapping.items():
-            mapping[key] = [value[0]]
-        self._mapping = mapping
-
-    # ACCESSORS
-    
-
-    # PRIVATE
-
-    def _getHandler(self, element):
-        """Retrieve handler for a particular element (ns, name) tuple.
-        """
-        try:
-            return self._mapping[element][-1]
-        except KeyError:
-            return None
-
-    def _pushOverrides(self, overrides):
-        """Push override handlers onto stack.
-
-        Overrides provide new handlers for (existing) elements.
-        Until popped again, the new handlers are used.
-       
-        overrides - mapping with key is element tuple (ns, name),
-                    value is handler instance.
-        """
-        for element, handler in overrides.items():
-            self._pushOverride(element, handler)
-        self._stack.append(overrides.keys())
-
-    def _pushOverridesAll(self, handler):
-        """Push special handler for all overrides.
-        """
-        keys = self._mapping.keys()
-        for element in keys:
-            self._pushOverride(element, handler)
-        self._stack.append(keys)
-        
-    def _popOverrides(self):
-        """Pop overrides.
-
-        Removes the overrides from the stack, restoring to previous
-        state.
-        """
-        elements = self._stack.pop()
-        for element in elements:
-            self._popOverride(element)
-
-    def _pushOverride(self, element, handler):
-        self._mapping.setdefault(element, []).append(handler)
-
-    def _popOverride(self, element):
-        stack = self._mapping[element]
-        stack.pop()
-        if not stack:
-            del self._mapping[element]
    
 class _SaxImportHandler(ContentHandler):
     """Receives the SAX events and dispatches them to sub handlers.
+    
+    The importer is a ImporterMappingStack object
     """
     
-    def __init__(self, importer, settings=None, result=None, info=None):
-        self._importer = importer
+    def __init__(self, mapping_stack, settings=None, result=None, info=None):
+        self.__mapping_stack = mapping_stack
         # top of the handler stack is handler which ignores any events,
         self._handler_stack = [IgnoringHandler(result, None, settings, info)]
         self._depth_stack = []
@@ -229,7 +231,7 @@ class _SaxImportHandler(ContentHandler):
         parent_handler = self._handler_stack[-1]
         if not parent_handler._checkElementAllowed(name):
             # we're not allowed and ignoring the element and all subelements
-            self._importer._pushOverridesAll(IgnoringHandler)
+            self.__mapping_stack.pushOverridesAll(IgnoringHandler)
             self._handler_stack.append(IgnoringHandler(
                 parent_handler.result(),
                 parent_handler,
@@ -239,7 +241,7 @@ class _SaxImportHandler(ContentHandler):
             self._depth += 1
             return
         # check whether we have a special handler
-        factory = self._importer._getHandler(name)
+        factory = self.__mapping_stack.getHandler(name)
         if factory is None:
             # no handler, use parent's handler
             handler = parent_handler
@@ -251,7 +253,7 @@ class _SaxImportHandler(ContentHandler):
                 self._settings,
                 self._info)
             handler.setDocumentLocator(self._locator)
-            self._importer._pushOverrides(handler.getOverrides())
+            self.__mapping_stack.pushOverrides(handler.getOverrides())
             self._handler_stack.append(handler)
             self._depth_stack.append(self._depth)
         
@@ -265,7 +267,7 @@ class _SaxImportHandler(ContentHandler):
             self._result = handler.result()
             self._handler_stack.pop()
             self._depth_stack.pop()
-            self._importer._popOverrides()
+            self.__mapping_stack.popOverrides()
             parent_handler = self._handler_stack[-1]
         else:
             parent_handler = handler
