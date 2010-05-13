@@ -2,7 +2,13 @@
 An XML exporter based on SAX events.
 """
 from StringIO import StringIO
+
+from grokcore import component
+from zope.component import queryMultiAdapter
+from zope.interface import implements, Interface
+
 from sprout.saxext.generator import XMLGenerator
+from sprout.saxext.interfaces import IExporterRegistry, IXMLProducer
 
 
 class XMLExportError(Exception):
@@ -36,6 +42,7 @@ NULL_SETTINGS = BaseSettings()
 class Exporter(object):
     """Export objects to XML, using SAX.
     """
+    implements(IExporterRegistry)
 
     def __init__(self, default_namespace, generator=None):
         self._mapping = {}
@@ -90,7 +97,9 @@ class Exporter(object):
             handler.startPrefixMapping(None, self._default_namespace)
         for prefix, uri in self._namespaces.items():
             handler.startPrefixMapping(prefix, uri)
-        self._getProducer(obj, handler, settings, info).sax()
+        producer = ExportConfiguration(
+            self, handler, settings, info).getProducer(obj)
+        producer.sax()
         if settings.asDocument():
             handler.endDocument()
 
@@ -123,25 +132,45 @@ class Exporter(object):
         """
         return self._default_namespace
 
-    # PRIVATE
 
-    def _getProducer(self, context, handler, settings, info):
+class ExportConfiguration(object):
+    implements(Interface)
+
+    def __init__(self, registry, handler, settings, info):
+        self._settings = settings
+        self._info = info
+        self.handler = handler
+        self.registry = registry
+
+    def getInfo(self):
+        return self._info
+
+    def getSettings(self):
+        return self._settings
+
+    def getDefaultNamespace(self):
+        return self.registry.getDefaultNamespace()
+
+    def getProducer(self, context):
         """Create SAX event producer for context, handler, settings.
 
         context - the object to represent as XML
         handler - a handler of SAX events
         settings - settings object configuring export
         """
-        class_ = context.__class__
-        producer_factory = self._mapping.get(class_, None)
-        if producer_factory is None:
-            if self._fallback is None:
-                raise XMLExportError, (
-                    "Cannot find SAX event producer for: %s" %
-                    class_)
-            else:
-                producer_factory = self._fallback
-        return producer_factory(context, self, handler, settings, info)
+        producer = queryMultiAdapter((context, self), IXMLProducer)
+        if producer is None:
+            cls = context.__class__
+            factory = self.registry._mapping.get(cls, None)
+            if factory is None:
+                if self.fallback is None:
+                    raise XMLExportError(
+                        "Cannot find SAX event producer for: %s" %
+                        cls)
+                else:
+                    factory = self.registry._fallback
+            return factory(context, self)
+        return producer
 
 
 class BaseProducer(object):
@@ -163,19 +192,18 @@ class BaseProducer(object):
     getProducer - to retrieve a producer for a sub object.
     subsax - to generate SAX events for a sub object
     """
+    implements(IXMLProducer)
 
-    def __init__(self, context, exporter, handler, settings, info=None):
+    def __init__(self, context, configuration):
         self.context = context
-        self._exporter = exporter
-        self.handler = handler
-        self._settings = settings
-        self._info = info
+        self.handler = configuration.handler
+        self.configuration = configuration
 
     def getInfo(self):
-        return self._info
+        return self.configuration.getInfo()
 
     def getSettings(self):
-        return self._settings
+        return self.configuration.getSettings()
 
     def sax(self):
         """To be overridden in subclasses
@@ -202,36 +230,27 @@ class BaseProducer(object):
                 else:
                     d[(None, key)] = value
         self.handler.startElementNS(
-            (ns, name),
-            None,
-            d)
+            (ns, name), None, d)
 
     def endElementNS(self, ns, name):
         """End element event in the provided namespace.
         """
         self.handler.endElementNS(
-            (ns, name),
-            None)
+            (ns, name), None)
 
     def startElement(self, name, attrs=None):
         """Start element event in the default namespace.
 
         attrs - see startElementNS.
         """
-        self.startElementNS(self._exporter.getDefaultNamespace(), name, attrs)
+        self.startElementNS(
+            self.configuration.getDefaultNamespace(), name, attrs)
 
     def endElement(self, name):
         """End element event in the default namespace.
         """
-        self.endElementNS(self._exporter.getDefaultNamespace(), name)
-
-    def getProducer(self, context):
-        """Give the producer for a particular context object.
-
-        context - the context object to get producer for.
-        """
-        return self._exporter._getProducer(
-            context, self.handler, self.getSettings(), self.getInfo())
+        self.endElementNS(
+            self.configuration.getDefaultNamespace(), name)
 
     def subsax(self, context):
         """Generate SAX events for context object.
@@ -239,5 +258,9 @@ class BaseProducer(object):
         context - the context object (typically sub oject) to generate SAX
                   events for.
         """
-        self.getProducer(context).sax()
+        self.configuration.getProducer(context).sax()
 
+
+class Producer(BaseProducer, component.MultiAdapter):
+    component.provides(IXMLProducer)
+    component.baseclass()
