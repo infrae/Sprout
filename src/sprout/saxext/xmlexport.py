@@ -4,10 +4,12 @@ An XML exporter based on SAX events.
 from StringIO import StringIO
 from sprout.saxext.generator import XMLGenerator
 
+
 class XMLExportError(Exception):
     pass
 
-class BaseSettings:
+
+class BaseSettings(object):
     """Base class of settings sent to XML generation.
 
     Subclass this for custom settings objects.
@@ -15,23 +17,26 @@ class BaseSettings:
     def __init__(self, asDocument=True, outputEncoding='utf-8'):
         self._asDocument = asDocument
         self._outputEncoding = outputEncoding
-        
+
     def asDocument(self):
         """Export XML as document with full prolog.
         """
         return self._asDocument
-    
+
     def outputEncoding(self):
         """Encoding the document will be output as.
         """
         return self._outputEncoding
 
+
 # null settings contains the default settings
 NULL_SETTINGS = BaseSettings()
 
-class Exporter:
+
+class Exporter(object):
     """Export objects to XML, using SAX.
     """
+
     def __init__(self, default_namespace, generator=None):
         self._mapping = {}
         self._fallback = None
@@ -42,7 +47,7 @@ class Exporter:
         self._generator = generator
 
     # MANIPULATORS
-    
+
     def registerProducer(self, klass, producer_factory):
         """Register an XML producer factory for a class.
 
@@ -51,7 +56,7 @@ class Exporter:
                            (subclass of BaseProducer)
         """
         self._mapping[klass] = producer_factory
-        
+
     def registerFallbackProducer(self, producer_factory):
         """Register a fallback XML producer. If a fallback producer is
         registered, it will be used to produce the XML for every class that
@@ -61,7 +66,7 @@ class Exporter:
                            (subclass of BaseProducer)
         """
         self._fallback = producer_factory
-        
+
     def registerNamespace(self, prefix, uri):
         """Register a namespace.
 
@@ -74,7 +79,7 @@ class Exporter:
 
     def exportToSax(self, obj, handler, settings=NULL_SETTINGS, info=None):
         """Export to sax events on handler.
-        
+
         obj - the object to convert to XML
         handler - a SAX event handler that events will be sent to
         settings - optionally a settings object to configure export
@@ -138,7 +143,8 @@ class Exporter:
                 producer_factory = self._fallback
         return producer_factory(context, self, handler, settings, info)
 
-class BaseProducer:
+
+class BaseProducer(object):
     """Base class for SAX event producers.
 
     Subclass this to create a producer generating SAX events.
@@ -157,19 +163,20 @@ class BaseProducer:
     getProducer - to retrieve a producer for a sub object.
     subsax - to generate SAX events for a sub object
     """
+
     def __init__(self, context, exporter, handler, settings, info=None):
         self.context = context
         self._exporter = exporter
         self.handler = handler
         self._settings = settings
         self._info = info
-        
+
     def getInfo(self):
         return self._info
-    
+
     def getSettings(self):
         return self._settings
-        
+
     def sax(self):
         """To be overridden in subclasses
         """
@@ -186,7 +193,7 @@ class BaseProducer:
         first element, the namespace name as the second element.
         """
         d = {}
-        
+
         if attrs is not None:
             for key, value in attrs.items():
                 # keep namespaced attributes
@@ -198,21 +205,21 @@ class BaseProducer:
             (ns, name),
             None,
             d)
-        
+
     def endElementNS(self, ns, name):
         """End element event in the provided namespace.
         """
         self.handler.endElementNS(
             (ns, name),
             None)
-    
+
     def startElement(self, name, attrs=None):
         """Start element event in the default namespace.
 
         attrs - see startElementNS.
         """
         self.startElementNS(self._exporter.getDefaultNamespace(), name, attrs)
-        
+
     def endElement(self, name):
         """End element event in the default namespace.
         """
@@ -224,7 +231,7 @@ class BaseProducer:
         context - the context object to get producer for.
         """
         return self._exporter._getProducer(
-            context, self.handler, self._settings, self.getInfo())
+            context, self.handler, self.getSettings(), self.getInfo())
 
     def subsax(self, context):
         """Generate SAX events for context object.
@@ -233,4 +240,4 @@ class BaseProducer:
                   events for.
         """
         self.getProducer(context).sax()
-                
+

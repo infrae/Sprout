@@ -8,10 +8,10 @@ class CollapsingHandler(HookableHandler):
     def __init__(self, output_handler):
         HookableHandler.__init__(self, output_handler)
         self._buffer = []
-    
+
     def characters_override(self, content):
         self._buffer.append(content)
-    
+
     def _flushCharacters(self):
         if self._buffer:
             self.getOutputHandler().characters(''.join(self._buffer))

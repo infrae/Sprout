@@ -11,14 +11,14 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
 
     This takes the SAX parser in Python and improves it (with some hints
     from the PyXML version as well).
-    
+
     Differences:
-    
+
     Producing a unicode stream is now possible, if encoding argument is
     set to None. The stream needs to be unicode aware itself in that case.
 
     No defaulting to sys.stdout; output stream must always be provided.
-    
+
     Classic non-namespace events are not handled but raise error
     to avoid confusion.
 
@@ -27,10 +27,10 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
     Closes empty elements immediately.
 
     Stability in the outputting of attributes (they're sorted).
-    
+
     Code has been cleaned up.
     """
-    
+
     def __init__(self, out, encoding="UTF-8"):
         xml.sax.handler.ContentHandler.__init__(self)
         if encoding is not None:
@@ -55,7 +55,7 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
                             self._encoding)
         else:
             self._out.write('<?xml version="1.0"?>\n')
-            
+
     def startPrefixMapping(self, prefix, uri):
         self._ns_contexts.append(self._current_context.copy())
         self._current_context[uri] = prefix
@@ -68,7 +68,7 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
     def startElement(self, name, attrs):
         raise NotSupportedError,\
               "XMLGenerator does not support non-namespace SAX events."
-    
+
     def endElement(self, name):
         raise NotSupportedError,\
               "XMLGenerator does not support non-namespace SAX events."
@@ -83,7 +83,7 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
 
         # handle as much as possible here so that errors are raised
         # at the right spot, and not only at endElementNS()
-        
+
         uri, localname = name
         if uri is None:
             qname = localname
@@ -129,7 +129,7 @@ class XMLGenerator(xml.sax.handler.ContentHandler):
         for qname, value in attr_data:
             self._out.write(' %s=' % qname)
             writeattr(self._out, value)
-    
+
         if close:
             self._out.write('/>')
         else:
