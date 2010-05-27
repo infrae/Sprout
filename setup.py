@@ -7,6 +7,10 @@ import os
 
 version = '1.0.3dev'
 
+tests_require = [
+    'zope.testing',
+    ]
+
 setup(name='Sprout',
       version=version,
       description="Common Python library which contains reusable components, developed at Infrae.",
@@ -37,4 +41,6 @@ setup(name='Sprout',
         'grokcore.component',
         ],
       test_suite = 'sprout',
+      tests_require = tests_require,
+      extras_require = {'test': tests_require},
       )

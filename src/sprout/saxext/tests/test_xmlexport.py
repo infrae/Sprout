@@ -1,6 +1,13 @@
 # test XML exporter
 import unittest
+
+from zope import component
+from zope.interface import Interface
+from zope.testing.cleanup import cleanUp
+
+
 from sprout.saxext import xmlexport
+from sprout.saxext.interfaces import IXMLProducer
 from sprout.saxext.xmlexport import XMLExportError
 from sprout.saxext.generator import XMLGenerator
 
@@ -57,6 +64,8 @@ class GooProducer(xmlexport.BaseProducer):
 
 
 class XMLExportTestCase(unittest.TestCase):
+    """Test old school xml exporter registration.
+    """
 
     def setUp(self):
         exporter = xmlexport.Exporter(
@@ -77,6 +86,26 @@ class XMLExportTestCase(unittest.TestCase):
         unsupported_type = 'not supported'
         self.assertRaises(
             XMLExportError, self.exporter.exportToString, unsupported_type)
+
+
+class XMLExportAdaptedTestCase(unittest.TestCase):
+    """Test adapter xml exporter registration.
+    """
+
+    def setUp(self):
+        self.exporter = xmlexport.Exporter(
+            'http://www.infrae.com/ns/test')
+        component.provideAdapter(FooProducer, (Foo, Interface), IXMLProducer)
+        component.provideAdapter(BarProducer, (Bar, Interface), IXMLProducer)
+
+    def tearDown(self):
+        cleanUp()
+
+    def test_export(self):
+        tree = Foo([Bar('one', 'a'), Bar('two', 'b')])
+        self.assertEquals(
+            '<?xml version="1.0" encoding="utf-8"?>\n<foo xmlns="http://www.infrae.com/ns/test"><bar myattr="a">one</bar><bar myattr="b">two</bar></foo>',
+            self.exporter.exportToString(tree))
 
 
 class Baz:
@@ -134,6 +163,7 @@ class CustomXMLGenerator(XMLGenerator):
         XMLGenerator.endElementNS(self, (None, 'hey'), None)
         XMLGenerator.startElementNS(self, name, qname, attrs)
 
+
 class XMLGeneratorTest(unittest.TestCase):
 
     def setUp(self):
@@ -147,6 +177,7 @@ class XMLGeneratorTest(unittest.TestCase):
         self.assertEquals(
             '<?xml version="1.0" encoding="utf-8"?>\n<hey/><foo/>',
             self.exporter.exportToString(tree))
+
 
 class FallbackTest(unittest.TestCase):
 
@@ -166,8 +197,9 @@ class FallbackTest(unittest.TestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    for testcase in [XMLExportTestCase, XMLExportNamespaceTestCase,
-         NoDefaultNamespaceTestCase, XMLGeneratorTest, FallbackTest]:
+    for testcase in [XMLExportTestCase, XMLExportAdaptedTestCase,
+                     XMLExportNamespaceTestCase, NoDefaultNamespaceTestCase,
+                     XMLGeneratorTest, FallbackTest]:
         suite.addTest(unittest.makeSuite(testcase))
     return suite
 
