@@ -8,22 +8,27 @@ It should have just enough API to build a simple DOM tree, which can then
 be displayed as XML using 'toXML'.
 """
 
-from xml.sax.saxutils import escape, unescape, quoteattr
+from xml.sax.saxutils import escape, quoteattr
+
 
 class DOMImplementation:
+
     def createDocument(self, namespaceURI, qualifiedName):
         doc = Document()
         doc.documentElement = doc.createElement(qualifiedName)
         return doc
 
+
 def getDOMImplementation():
     return DOMImplementation()
 
+
 class Document:
+
     def __init__(self):
         self.documentElement = None
         self.ownerDocument = None
-        
+
     def createElement(self, name):
         return ElementNode(name, self)
 
@@ -32,17 +37,19 @@ class Document:
 
     def toXML(self):
         return self.documentElement.toXML()
-    
+
+
 class ElementNode:
+
     def __init__(self, name, ownerDocument):
         self.nodeName = name
         self.ownerDocument = ownerDocument
         self.childNodes = []
         self.attributes = {}
-        
+
     def setAttribute(self, name, value):
         self.attributes[name] = value
-        
+
     def appendChild(self, child):
         self.childNodes.append(child)
         return child
@@ -66,8 +73,10 @@ class ElementNode:
             tag += '>'
         return '%s%s</%s>' % (
             tag, ''.join(contents), self.nodeName)
-    
+
+
 class TextNode:
+
     def __init__(self, data, ownerDocument):
         self.data = data
         self.ownerDocument = ownerDocument

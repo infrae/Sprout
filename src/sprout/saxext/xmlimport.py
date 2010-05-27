@@ -293,6 +293,7 @@ class _SaxImportHandler(ContentHandler):
         """
         return self._outer_result or self._result
 
+
 class DummyLocator:
     """A dummy locator which is used if no document locator is available.
     """
@@ -315,6 +316,7 @@ class DummyLocator:
         """Return the system identifier for the current event.
         """
         return None
+
 
 class BaseHandler(object):
     """Base class of all handlers.

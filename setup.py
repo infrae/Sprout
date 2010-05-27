@@ -12,7 +12,6 @@ setup(name='Sprout',
       description="Common Python library which contains reusable components, developed at Infrae.",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
-      # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
         "License :: OSI Approved :: BSD License",
         "License :: OSI Approved :: GNU General Public License (GPL)",
@@ -32,7 +31,10 @@ setup(name='Sprout',
       include_package_data=True,
       zip_safe=False,
       install_requires=[
-          'setuptools',
-      ],
+        'setuptools',
+        'zope.interface',
+        'zope.component',
+        'grokcore.component',
+        ],
       test_suite = 'sprout',
       )

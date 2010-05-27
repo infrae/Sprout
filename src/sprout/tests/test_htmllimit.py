@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-import unittest, os
+
+import unittest
+import os
 from StringIO import StringIO
+
 from sprout import htmllimit
-from sprout.saxext import html2sax
 
 
 def makeXML(html, maxlength=-1):

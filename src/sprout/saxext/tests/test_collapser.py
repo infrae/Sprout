@@ -1,13 +1,14 @@
 import unittest
 from sprout.saxext.collapser import CollapsingHandler
-from sprout.saxext.hookablehandler import HookableHandler
 from sprout.saxext.generator import XMLGenerator
 from StringIO import StringIO
 
+
 class TestHandler:
+
     def __init__(self):
         self._last_characters = None
-        
+
     def getLastCharacters(self):
         return self._last_characters
 
@@ -16,11 +17,13 @@ class TestHandler:
 
     def endElementNS(self, name, qname):
         pass
-    
+
     def characters(self, content):
         self._last_characters = content
-    
+
+
 class CollapsingHandlerTestCase(unittest.TestCase):
+
     def test_pass_along(self):
         # does it actually produce correct output?
         f = StringIO()
@@ -55,13 +58,11 @@ class CollapsingHandlerTestCase(unittest.TestCase):
         c = CollapsingHandler(handler)
         c.startElementNS((None, 'b'), None, {})
         self.assertEquals(None, handler.getLastCharacters())
-        
+
+
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [CollapsingHandlerTestCase]:
         suite.addTest(unittest.makeSuite(testcase))
     return suite
 
-if __name__ == '__main__':
-    unittest.main()
-    

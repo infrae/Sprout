@@ -1,14 +1,14 @@
-import HTMLParser as htmlparser
+
 from HTMLParser import HTMLParser
-import re
 from htmlentitydefs import name2codepoint
+
 from sprout.saxext.hookablehandler import HookableHandler
 
 IMMEDIATE_CLOSE_TAGS = ['br']
 
-MUST_HAVE_END_TAGS = ['a', 'abbr', 'acronym', 'address', 'applet', 
-                        'b', 'bdo', 'big', 'blink', 'blockquote', 
-                        'button', 'caption', 'center', 'cite', 
+MUST_HAVE_END_TAGS = ['a', 'abbr', 'acronym', 'address', 'applet',
+                        'b', 'bdo', 'big', 'blink', 'blockquote',
+                        'button', 'caption', 'center', 'cite',
                         'comment', 'del', 'dfn', 'dir', 'div',
                         'dl', 'dt', 'em', 'embed', 'fieldset',
                         'font', 'form', 'frameset', 'h1', 'h2',
@@ -18,7 +18,7 @@ MUST_HAVE_END_TAGS = ['a', 'abbr', 'acronym', 'address', 'applet',
                         'multicol', 'nobr', 'noembed', 'noframes',
                         'noscript', 'object', 'ol', 'optgroup',
                         'option', 'p', 'pre', 'q', 's', 'script',
-                        'select', 'small', 'span', 'strike', 
+                        'select', 'small', 'span', 'strike',
                         'strong', 'style', 'sub', 'sup', 'table',
                         'tbody', 'td', 'textarea', 'tfoot',
                         'th', 'thead', 'title', 'tr', 'tt', 'u',
@@ -26,19 +26,19 @@ MUST_HAVE_END_TAGS = ['a', 'abbr', 'acronym', 'address', 'applet',
 
 class HtmlTagFixerFilter(HookableHandler):
     """makes sure that some elements do or don't get a closing tag"""
-    
+
     def __init__(self, output_handler):
         HookableHandler.__init__(self, output_handler)
         self._count = 0
         self._stack = []
 
     def startElementNS_preprocess(self, name, qname, attrs):
-        self._stack.append((name, self._count)) 
+        self._stack.append((name, self._count))
         self._count += 1
 
     def endElementNS_preprocess(self, name, qname):
         if name[1] not in MUST_HAVE_END_TAGS:
-            return 
+            return
         last_name, last_count = self._stack[-1]
         if last_name == name and last_count == self._count - 1:
             self.getOutputHandler().characters(' ')
@@ -54,7 +54,7 @@ class Html2SaxParser(HTMLParser):
         HTMLParser.__init__(self)
         self._handler = HtmlTagFixerFilter(handler)
         self._stack = []
-        
+
     def _createAttrDict(self, attrs):
         result = {}
         for key, value in attrs:
@@ -62,7 +62,7 @@ class Html2SaxParser(HTMLParser):
                 value = key
             result[(None, key)] = value
         return result
-        
+
     def close(self):
         # close everything still open
         stack = self._stack
@@ -70,7 +70,7 @@ class Html2SaxParser(HTMLParser):
             pushed_tag = stack.pop()
             self._handler.endElementNS((None, pushed_tag), None)
         HTMLParser.close(self)
-            
+
     def handle_starttag(self, tag, attrs):
         if tag in IMMEDIATE_CLOSE_TAGS:
             self._handler.startElementNS((None, tag), None, {})
@@ -79,7 +79,7 @@ class Html2SaxParser(HTMLParser):
         self._handler.startElementNS((None, tag), None,
                                     self._createAttrDict(attrs))
         self._stack.append(tag)
-       
+
     def handle_endtag(self, tag):
         if tag in IMMEDIATE_CLOSE_TAGS:
             return
@@ -94,7 +94,7 @@ class Html2SaxParser(HTMLParser):
                 self._stack = stack
                 break
         # if stray end tag, don't do a thing with the stack
-        
+
     def handle_startendtag(self, tag, attrs):
         self._handler.startElementNS((None, tag), None,
                                      self._createAttrDict(attrs))
@@ -102,7 +102,7 @@ class Html2SaxParser(HTMLParser):
 
     def handle_data(self, data):
         self._handler.characters(data)
-        
+
     def handle_charref(self, name):
         # &#...; direct unicode codepoint
         if name.startswith('x'):
@@ -117,7 +117,7 @@ class Html2SaxParser(HTMLParser):
             # can't handle this, ignore
             return
         self._handler.characters(c)
-    
+
     def handle_entityref(self, name):
         # &foo; named entity reference
         try:
@@ -131,7 +131,7 @@ class Html2SaxParser(HTMLParser):
             # can't handle this, ignore
             return
         self._handler.characters(c)
-        
+
     def handle_comment(self, data):
         # skip comments
         pass
