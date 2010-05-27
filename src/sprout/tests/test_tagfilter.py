@@ -1,6 +1,7 @@
 import unittest
 from sprout.tagfilter import TagFilter
 
+
 class TagFilterTestCase(unittest.TestCase):
     def test_simple(self):
         f = TagFilter()
@@ -34,7 +35,7 @@ class TagFilterTestCase(unittest.TestCase):
         self.assertEquals(
             '&lt;a href<a href="url">jkj&gt;&lt;',
             s)
-        
+
     def test_attributes2(self):
         f = TagFilter()
         f.registerElement('b')
@@ -109,7 +110,7 @@ class TagFilterTestCase(unittest.TestCase):
         self.assertEquals(
             'Hoi<br/>Dag',
             s)
-        
+
     def test_immediate_close_2(self):
         f = TagFilter()
         f.registerElement('foo', ['a'])
@@ -117,13 +118,11 @@ class TagFilterTestCase(unittest.TestCase):
         self.assertEquals(
             'Hoi<foo a="Dag" />',
             s)
-        
+
+
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [TagFilterTestCase]:
         suite.addTest(unittest.makeSuite(testcase))
     return suite
 
-if __name__ == '__main__':
-    unittest.main()
-    

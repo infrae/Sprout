@@ -3,11 +3,12 @@ import unittest
 from sprout import htmlsubset, silvasubset
 from sprout.picodom import getDOMImplementation
 
+
 class ParagraphSubsetTestCase(unittest.TestCase):
     def setUp(self):
         self._subset = silvasubset.createParagraphSubset()
-        
-    def parse(self, text):        
+
+    def parse(self, text):
         document = getDOMImplementation().createDocument(None, 'p')
         p = self._subset.parse(text, document.documentElement)
         return p.toXML()
@@ -16,10 +17,10 @@ class ParagraphSubsetTestCase(unittest.TestCase):
         document = getDOMImplementation().createDocument(None, 'p')
         p = self._subset.filteredParse(text, document.documentElement)
         return p.toXML()
-    
+
     def test_simple_em(self):
         self.assertEquals('<p><em>Foo</em></p>', self.parse('<i>Foo</i>'))
-        
+
     def test_close_em(self):
         self.assertEquals('<p><em>Foo</em></p>', self.parse('<i>Foo'))
 
@@ -30,7 +31,7 @@ class ParagraphSubsetTestCase(unittest.TestCase):
     def test_nomarkup(self):
         self.assertEquals('<p>This is simple</p>',
                           self.parse("This is simple"))
-            
+
 
     def test_bold_i_markup(self):
         self.assertEquals(
@@ -66,7 +67,7 @@ class ParagraphSubsetTestCase(unittest.TestCase):
         self.assertEquals(
             '<p><link url="http://www.infrae.com">Foo</link></p>',
             self.parse('<a href="http://www.infrae.com">Foo<hoi>Bar</hoi></a>'))
-        
+
     def test_index(self):
         self.assertEquals(
             '<p><index name="Foo"></index></p>',
@@ -76,7 +77,7 @@ class ParagraphSubsetTestCase(unittest.TestCase):
         self.assertEquals(
             '<p><index name="Foo"></index></p>',
             self.parse('<index name="Foo">Fo<b>h</b>o</index>'))
-        
+
     def test_br(self):
         # can't collapse element to <br /> due to limited XML outputter
         # in tests
@@ -108,7 +109,7 @@ class ParagraphSubsetTestCase(unittest.TestCase):
         self.assertEquals(
             '<p>Foo<br></br>Bar</p>',
             self.parse('Foo<br/>Bar'))
-        
+
     def test_unknown_tag(self):
         self.assertEquals(
             '<p>FooBar</p>',
@@ -150,7 +151,7 @@ class ParagraphSubsetTestCase(unittest.TestCase):
         text = '''\
 Foo
 Bar'''
-        
+
         self.assertEquals(
             '<p>Foo<br></br>Bar</p>',
             self.filteredParse(text))
@@ -164,7 +165,7 @@ Baz'''
             '<p>Foo<br></br>Bar<br></br>Baz</p>',
             self.filteredParse(text))
 
-    
+
     def test_can_place_a_in_i(self):
         # should be able to place a element inside i tag
         text = '<i><a href="http://www.infrae.com">Foo</a></i>'
@@ -179,12 +180,13 @@ Baz'''
         self.assertEquals(
             '<p><em>Foo<em>Bar</em>Baz</em></p>',
             self.filteredParse(text))
-        
+
+
 class HeadingSubsetTestCase(unittest.TestCase):
     def setUp(self):
         self._subset = silvasubset.createHeadingSubset()
-        
-    def parse(self, text):        
+
+    def parse(self, text):
         document = getDOMImplementation().createDocument(None, 'heading')
         p = self._subset.parse(text, document.documentElement)
         return p.toXML()
@@ -193,7 +195,7 @@ class HeadingSubsetTestCase(unittest.TestCase):
         document = getDOMImplementation().createDocument(None, 'heading')
         p = self._subset.filteredParse(text, document.documentElement)
         return p.toXML()
-    
+
     def test_heading1(self):
         self.assertEquals(
             '<heading>Foo</heading>',
@@ -208,13 +210,11 @@ class HeadingSubsetTestCase(unittest.TestCase):
         self.assertEquals(
             '<heading>Foo&lt;b&gt;bold&lt;/b&gt;</heading>',
             self.filteredParse('Foo<b>bold</b>'))
-        
+
+
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [ParagraphSubsetTestCase, HeadingSubsetTestCase]:
         suite.addTest(unittest.makeSuite(testcase))
     return suite
 
-if __name__ == '__main__':
-    unittest.main()
-    
