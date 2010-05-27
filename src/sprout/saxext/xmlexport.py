@@ -163,7 +163,7 @@ class ExportConfiguration(object):
             cls = context.__class__
             factory = self.registry._mapping.get(cls, None)
             if factory is None:
-                if self.fallback is None:
+                if self.registry._fallback is None:
                     raise XMLExportError(
                         "Cannot find SAX event producer for: %s" %
                         cls)
