@@ -9,20 +9,25 @@ from xml.sax.handler import feature_namespaces
 from xml.sax.handler import ContentHandler
 from StringIO import StringIO
 
+
 class XMLImportError(Exception):
     pass
+
 
 class NotAllowedError(XMLImportError):
     """Something found that is not allowed.
     """
 
+
 class ElementNotAllowedError(NotAllowedError):
     """Element is found that is not allowed.
     """
 
+
 class TextNotAllowedError(NotAllowedError):
     """Text is found that is not allowed.
     """
+
 
 class BaseSettings(object):
     """Base class of settings sent to the handlers.
@@ -39,11 +44,13 @@ class BaseSettings(object):
     def getImportFilterFactory(self):
         return self._import_filter_factory
 
+
 # null settings contains the default settings
 NULL_SETTINGS = BaseSettings()
 IGNORE_SETTINGS = BaseSettings(ignore_not_allowed=True)
 
-class MappingStack:
+
+class MappingStack(object):
     """A runtime stack for content handlers
 
     It wraps a Importer mapping and provides overrides.
@@ -104,9 +111,10 @@ class MappingStack:
             del self.__mapping[element]
 
 
-class Importer:
+class Importer(object):
     """A SAX based importer.
     """
+
     def __init__(self, handler_map=None):
         """Create an importer.
 
@@ -198,6 +206,7 @@ class Importer:
         """
         f = StringIO(s)
         return self.importFromFile(f, settings, result, info)
+
 
 class _SaxImportHandler(ContentHandler):
     """Receives the SAX events and dispatches them to sub handlers.
@@ -294,9 +303,10 @@ class _SaxImportHandler(ContentHandler):
         return self._outer_result or self._result
 
 
-class DummyLocator:
+class DummyLocator(object):
     """A dummy locator which is used if no document locator is available.
     """
+
     def getColumnNumber(self):
         """Return the column number where the current event ends.
         """
@@ -449,6 +459,7 @@ class BaseHandler(object):
         importer.
         """
         return True
+
 
 class IgnoringHandler(BaseHandler):
     """A handler that ignores any incoming events that cannot be handled.

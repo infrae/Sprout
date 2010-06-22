@@ -7,4 +7,9 @@ class IExporterRegistry(Interface):
 
 
 class IXMLProducer(Interface):
-    pass
+    """This adapter provides a XML version for a content.
+    """
+
+    def getSettings():
+        """Return settings to use for the XML version.
+        """

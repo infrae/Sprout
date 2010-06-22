@@ -5,7 +5,6 @@ from zope import component
 from zope.interface import Interface
 from zope.testing.cleanup import cleanUp
 
-
 from sprout.saxext import xmlexport
 from sprout.saxext.interfaces import IXMLProducer
 from sprout.saxext.xmlexport import XMLExportError
