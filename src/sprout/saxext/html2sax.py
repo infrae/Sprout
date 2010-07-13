@@ -1,5 +1,5 @@
 
-from HTMLParser import HTMLParser
+from HTMLParser import HTMLParser, HTMLParseError
 from htmlentitydefs import name2codepoint
 
 from sprout.saxext.hookablehandler import HookableHandler
@@ -24,6 +24,7 @@ MUST_HAVE_END_TAGS = ['a', 'abbr', 'acronym', 'address', 'applet',
                         'th', 'thead', 'title', 'tr', 'tt', 'u',
                         'ul', 'xmp']
 
+
 class HtmlTagFixerFilter(HookableHandler):
     """makes sure that some elements do or don't get a closing tag"""
 
@@ -45,6 +46,7 @@ class HtmlTagFixerFilter(HookableHandler):
 
     def characters_simple(self):
         self._count += 1
+
 
 class Html2SaxParser(HTMLParser):
     """Turn arbitrary HTML events into XML-compliant SAX stream.
@@ -144,7 +146,13 @@ class Html2SaxParser(HTMLParser):
         # skip processing instructions
         pass
 
-def saxify(html, handler):
+
+def saxify(html, handler, validate=False):
+    if validate:
+        validator = HTMLParser()
+        # This will raise an exception if it cannot process the html
+        validator.feed(html)
+        validator.close()
     parser = Html2SaxParser(handler)
     parser.feed(html)
     parser.close()
