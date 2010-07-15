@@ -1,8 +1,17 @@
 Changes
 =======
 
-1.0.3 (unreleased)
+1.0.3 (15/07/2010)
 ------------------
+
+* Remove deprecated silvasubset,
+
+* Add support to register producers with adapters,
+
+* saxify as now a validate option to verify the validity of the incoming
+  XML to work on before doing anything,
+
+* Update and clean tests.
 
 
 1.0.2 (03/11/2009)

@@ -1,5 +1,5 @@
 
-from HTMLParser import HTMLParser, HTMLParseError
+from HTMLParser import HTMLParser
 from htmlentitydefs import name2codepoint
 
 from sprout.saxext.hookablehandler import HookableHandler
