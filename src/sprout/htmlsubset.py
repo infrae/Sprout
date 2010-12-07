@@ -24,7 +24,7 @@ class Subset:
         self._elements = {}
         self._tagfilter = tagfilter.TagFilter(html_entities=True)
         self._importer_dict = {}
-        
+
     def registerElement(self, element):
         self._elements[element.getName()] = element
         self._tagfilter.registerElement(
@@ -35,17 +35,17 @@ class Subset:
 
     def getImporter(self):
         return xmlimport.Importer(self._importer_dict)
-    
-    def isAllowed(self, container_name, name):    
+
+    def isAllowed(self, container_name, name):
         element = self._elements.get(container_name)
         if element is None:
             return False
         return element.isAllowed(name)
-    
+
     def filteredParse(self, html, result):
         html = self._tagfilter.escapeNonElements(html)
         return self.parse(html, result)
-    
+
     def parse(self, html, result):
         importer = self.getImporter()
         handler = importer.importHandler(SubsetSettings(self), result)
@@ -58,7 +58,7 @@ class Subset:
 class Element:
     """A single element in a subset.
     """
-    
+
     def __init__(self, name, required_attributes, optional_attributes,
                  subelements, handler):
         self._name = name
@@ -66,7 +66,7 @@ class Element:
         self._optional_attributes = optional_attributes
         self._subelements = set(subelements)
         self._handler = handler
-        
+
     def getName(self):
         return self._name
 
@@ -78,7 +78,7 @@ class Element:
 
     def getHandler(self):
         return self._handler
-    
+
     def isAllowed(self, name):
         return name in self._subelements
 
@@ -86,10 +86,10 @@ class SubsetSettings(xmlimport.BaseSettings):
     def __init__(self, subset):
         super(SubsetSettings, self).__init__(ignore_not_allowed=True)
         self._subset = subset
-        
+
     def isElementAllowed(self, container_name, name):
         return self._subset.isAllowed(container_name, name)
-    
+
 class SubsetHandler(xmlimport.BaseHandler):
     """A handler that ignores any elements not in subset.
     """
@@ -98,7 +98,7 @@ class SubsetHandler(xmlimport.BaseHandler):
 
 class BlockHandler(SubsetHandler):
     parsed_name = 'block'
-        
+
     def characters(self, data):
         node = self.parent()
         doc = node.ownerDocument
