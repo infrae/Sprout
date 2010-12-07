@@ -8,7 +8,7 @@ class Ranges:
         self._s = s
         self._e = e
         self._open = [(s, e)]
-    
+
     def block(self, i, j):
         """Block another subrange.
         """
@@ -34,7 +34,7 @@ class Ranges:
             else:
                 open.append((s, e))
         self._open = open
-            
+
     def getOpenRanges(self):
         """Get all ranges that are still open.
         """
@@ -44,10 +44,10 @@ class Ranges:
         """Get all the ranges that are blocked.
         """
         return [r[:2] for r in self.getRanges() if not r[2]]
-    
+
     def getRanges(self):
         """Get all ranges, with a third element indicating blocked status.
-        
+
         True if open.
         """
         ranges = []

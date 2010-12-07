@@ -61,7 +61,7 @@ class HTMLLimiter(XMLGenerator):
     def flush(self):
         """If there is text in the buffer, concatenate and write it"""
         content = ''.join(self._buffer)
-        if (self.maxlength >= 0 and 
+        if (self.maxlength >= 0 and
                 len(content.strip()) >= self.maxlength - self._current_length):
             content = content[:self.maxlength - self._current_length]
             self._working = False

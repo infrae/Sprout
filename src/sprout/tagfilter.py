@@ -36,10 +36,10 @@ class TagFilter:
 
     This is definitely *not* a normal way to treat XML, but may be useful
     to clean up messy user input with mistakes, such as HTML.
-    
+
     This right now only supports open tags and closing tags.
     """
-    
+
     def __init__(self, html_entities=False):
         self._elements = {}
         if html_entities:
@@ -48,7 +48,7 @@ class TagFilter:
             entity_names = ['&amp;', '&gt;', '&lt;']
         self._entities = re.compile('|'.join(entity_names),
                                     re.IGNORECASE | re.MULTILINE)
-        
+
     def registerElement(self, name,
                         attribute_names=None,
                         optional_attribute_names=None):
@@ -56,10 +56,10 @@ class TagFilter:
         optional_attribute_names = set(optional_attribute_names or [])
         all_attribute_names = attribute_names.union(optional_attribute_names)
         self._elements[name] = attribute_names, all_attribute_names
-        
+
     def getElementNames(self):
         return self._elements.keys()
-    
+
     def findNonElements(self, s):
         """Given a string, find returns a Ranges object.
 
@@ -124,7 +124,7 @@ class TagFilter:
         result = []
         match = tagfind.match(rawdata, i + 1)
         k = match.end()
-        
+
         while k < j:
             m = attrfind.match(rawdata, k)
             if not m:
