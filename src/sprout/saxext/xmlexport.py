@@ -210,6 +210,9 @@ class BaseProducer(object):
         """
         raise NotImplemented
 
+    def characters(self, content):
+        self.handler.characters(content)
+
     def startElementNS(self, ns, name, attrs=None):
         """Start element event in the provided namespace.
 
