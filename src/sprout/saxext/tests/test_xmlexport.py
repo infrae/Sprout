@@ -29,6 +29,16 @@ class Moo:
         self._attrs = attrs
 
 
+class Parent(object):
+
+    def __init__(self, sub):
+        self.sub = sub
+
+
+class Sub(object):
+    pass
+
+
 class FooProducer(xmlexport.BaseProducer):
 
     def sax(self):
@@ -60,6 +70,21 @@ class GooProducer(xmlexport.BaseProducer):
         self.startElement('goo')
         self.handler.characters('An unregistered class.')
         self.endElement('goo')
+
+
+class BazProducer(xmlexport.BaseProducer):
+
+    def sax(self):
+        self.startElement('parent')
+        self.subsax(self.context.sub, baz=self.context)
+        self.endElement('parent')
+
+
+class SubProducer(xmlexport.BaseProducer):
+
+    def sax(self, baz):
+        self.startElement('sub', dict(up=str(id(baz))))
+        self.endElement('sub')
 
 
 class XMLExportTestCase(unittest.TestCase):
@@ -96,6 +121,8 @@ class XMLExportAdaptedTestCase(unittest.TestCase):
             'http://www.infrae.com/ns/test')
         component.provideAdapter(FooProducer, (Foo, Interface), IXMLProducer)
         component.provideAdapter(BarProducer, (Bar, Interface), IXMLProducer)
+        component.provideAdapter(BazProducer, (Parent, Interface), IXMLProducer)
+        component.provideAdapter(SubProducer, (Sub, Interface), IXMLProducer)
 
     def tearDown(self):
         cleanUp()
@@ -106,6 +133,12 @@ class XMLExportAdaptedTestCase(unittest.TestCase):
             '<?xml version="1.0" encoding="utf-8"?>\n<foo xmlns="http://www.infrae.com/ns/test"><bar myattr="a">one</bar><bar myattr="b">two</bar></foo>',
             self.exporter.exportToString(tree))
 
+    def test_sax_with_kw(self):
+        parent = Parent(Sub())
+        tree = Foo([parent])
+        self.assertEquals(
+            '<?xml version="1.0" encoding="utf-8"?>\n<foo xmlns="http://www.infrae.com/ns/test"><parent><sub up="%s"/></parent></foo>' % id(parent),
+            self.exporter.exportToString(tree))
 
 class Baz:
     pass

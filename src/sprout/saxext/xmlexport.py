@@ -255,13 +255,13 @@ class BaseProducer(object):
         self.endElementNS(
             self.configuration.getDefaultNamespace(), name)
 
-    def subsax(self, context):
+    def subsax(self, context, **kw):
         """Generate SAX events for context object.
 
         context - the context object (typically sub oject) to generate SAX
                   events for.
         """
-        self.configuration.getProducer(context).sax()
+        self.configuration.getProducer(context).sax(**kw)
 
 
 class Producer(BaseProducer, component.MultiAdapter):
