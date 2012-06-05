@@ -235,6 +235,12 @@ class BaseProducer(object):
         self.handler.startElementNS(
             (ns, name), None, d)
 
+    def startPrefixMapping(self, prefix, url):
+        self.handler.startPrefixMapping(prefix, url)
+
+    def endPrefixMapping(self, prefix):
+        self.handler.endPrefixMapping(prefix)
+
     def endElementNS(self, ns, name):
         """End element event in the provided namespace.
         """
