@@ -1,11 +1,13 @@
 import unittest
 import os.path
 
+from sprout.saxext.hookablehandler import HookableHandler
 from sprout.saxext import xmlimport, xmlexport
 
 _testdir = os.path.split(__file__)[0]
 
 class Doc:
+
     def __init__(self):
         self._alpha = None
 
@@ -14,8 +16,10 @@ class Doc:
 
     def getAlpha(self):
         return self._alpha
-    
+
+
 class Alpha:
+
     def __init__(self):
         self._sub = []
 
@@ -24,26 +28,32 @@ class Alpha:
 
     def getSub(self):
         return self._sub
-    
+
+
 class Beta:
+
     def __init__(self, value):
         self._value = value
 
     def getValue(self):
         return self._value
-    
+
+
 class Gamma:
+
     def __init__(self, value):
         self._value = value
 
     def getValue(self):
         return self._value
-    
+
+
 class Delta:
+
     def __init__(self, value):
         self._value = value
         self._extra = None
-        
+
     def setExtra(self, extra):
         self._extra = extra
 
@@ -52,69 +62,91 @@ class Delta:
 
     def getExtra(self):
         return self._extra
-    
+
+
 class AlphaHandler(xmlimport.BaseHandler):
+
     def startElementNS(self, name, qname, attrs):
         self.setResult(Alpha())
         self.parent().setAlpha(self.result())
 
+
 class AlphaProducer(xmlexport.BaseProducer):
+
     def sax(self):
         self.startElement('alpha')
         for obj in self.context.getSub():
             self.subsax(obj)
         self.endElement('alpha')
-        
+
+
 class BetaHandler(xmlimport.BaseHandler):
+
     def characters(self, data):
         self.setResult(Beta(data))
         self.parent().appendSub(self.result())
 
+
 class BetaProducer(xmlexport.BaseProducer):
+
     def sax(self):
         self.startElement('beta')
         self.handler.characters(self.context.getValue())
         self.endElement('beta')
-        
+
+
 class GammaHandler(xmlimport.BaseHandler):
+
     def startElementNS(self, name, qname, attrs):
         self.setResult(Gamma(attrs[(None, 'value')]))
         self.parent().appendSub(self.result())
 
+
 class GammaLocatingHandler(xmlimport.BaseHandler):
+
     def startElementNS(self, name, qname, attrs):
         locator = self.getDocumentLocator()
         self.setResult((locator.getLineNumber(),
             locator.getColumnNumber(),))
         self.parent().appendSub(self.result())
 
+
 class GammaProducer(xmlexport.BaseProducer):
+
     def sax(self):
         self.startElement('gamma', {'value':self.context.getValue()})
         self.endElement('gamma')
-        
+
+
 class DeltaHandler(xmlimport.BaseHandler):
+
     def getOverrides(self):
         return { (None, 'beta') : SubBetaHandler }
-    
+
     def startElementNS(self, name, qname, attrs):
         self.setResult(Delta(attrs[(None, 'attr')]))
 
     def endElementNS(self, name, qname):
         self.parent().appendSub(self.result())
 
+
 class DeltaProducer(xmlexport.BaseProducer):
+
     def sax(self):
         self.startElement('delta', {'attr': self.context.getValue()})
         self.subsax(self.context.getExtra())
         self.endElement('delta')
-        
+
+
 class SubBetaHandler(xmlimport.BaseHandler):
+
     def characters(self, data):
         self.setResult(Beta(data))
         self.parent().setExtra(self.result())
 
+
 class XMLImportTestCase(unittest.TestCase):
+
     def setUp(self):
         self._importer = xmlimport.Importer({
             (None, 'alpha'): AlphaHandler,
@@ -152,10 +184,11 @@ class XMLImportTestCase(unittest.TestCase):
         self.assertEquals('Four', sub[3].getValue())
         self.assertEquals('Five', sub[4].getValue())
         self.assertEquals('Six', sub[4].getExtra().getValue())
-        
-    def test_importFromFileWithLocator(self):
+
+    def test_importFromStreamWithLocator(self):
         result = Doc()
-        self._locating_importer.importFromFile(os.path.join(_testdir, 'alpha.xml'), result=result)
+        self._locating_importer.importFromStream(
+            os.path.join(_testdir, 'alpha.xml'), result=result)
         sub = result.getAlpha().getSub()
         line_number, col_count = sub[3]
         self.assertEquals(line_number, 5)
@@ -173,21 +206,24 @@ class XMLImportTestCase(unittest.TestCase):
         result = Doc()
 
         # a handler that replaces Foo with Bar
-        from sprout.saxext.hookablehandler import HookableHandler        
+
         class FooBarHandler(HookableHandler):
+
             def characters_preprocess(self, data):
                 if data == 'Foo':
                     return ['Bar']
                 else:
                     return [data]
-        settings = xmlimport.BaseSettings(import_filter_factory=FooBarHandler)
-        self._importer.importFromString('<alpha><beta>Foo</beta></alpha>', 
-            result=result, settings=settings)
+
+        self._importer.importFromString(
+            '<alpha><beta>Foo</beta></alpha>',
+            result=result,
+            options={'import_filter': FooBarHandler})
         sub = result.getAlpha().getSub()
         # filter should replace any Foo with Bar
         self.assertEquals('Bar', sub[0].getValue())
 
-        
+
     def test_resultIsResult(self):
         # check whether result from the function is the same as
         # result we pass int
@@ -195,14 +231,16 @@ class XMLImportTestCase(unittest.TestCase):
         call_result = self._importer.importFromString(
             self.xml, result=result)
         self.assertEquals(result, call_result)
-        
-    
+
+
 class NoStartObjectAlphaHandler(xmlimport.BaseHandler):
+
     def startElementNS(self, name, qname, attrs):
         self.setResult(Alpha())
-       
+
+
 class NoStartObjectImportTestCase(unittest.TestCase):
-    
+
     def setUp(self):
         self._importer = xmlimport.Importer({
             (None, 'alpha'): NoStartObjectAlphaHandler,
@@ -210,7 +248,7 @@ class NoStartObjectImportTestCase(unittest.TestCase):
             (None, 'gamma') : GammaHandler,
             (None, 'delta') : DeltaHandler
             })
-    
+
     def test_import(self):
         xml = '''\
 <alpha>
@@ -239,7 +277,7 @@ class ImportExportTestCase(unittest.TestCase):
             (None, 'gamma') : GammaHandler,
             (None, 'delta') : DeltaHandler
             })
-        
+
         self._exporter = xmlexport.Exporter(None)
         self._exporter.registerProducer(
             Alpha, AlphaProducer)
@@ -249,7 +287,7 @@ class ImportExportTestCase(unittest.TestCase):
             Gamma, GammaProducer)
         self._exporter.registerProducer(
             Delta, DeltaProducer)
-        
+
         self._xml = '''\
 <alpha>
    <beta>One</beta>
@@ -283,55 +321,75 @@ class ImportExportTestCase(unittest.TestCase):
         second_xml = self._exporter.exportToString(new_tree)
         self.assertEquals(first_xml, second_xml)
 
+
 class Container(object):
+
     def __init__(self):
         self.children = []
-        
+
+
 class A(object):
+
     def __init__(self, name):
         self.name = name
         self.children = []
 
+
 class B(object):
+
     def __init__(self):
         self.children = []
         self.text = []
-        
+
+
 class C(object):
+
     def __init__(self):
         self.children = []
 
+
 class AHandler(xmlimport.BaseHandler):
+
     def startElementNS(self, name, qname, attrs):
         a = A(name)
         self.parent().children.append(a)
         self.setResult(a)
-        
+
+
 class BHandler(xmlimport.BaseHandler):
+
     def startElementNS(self, name, qname, attrs):
         b = B()
         self.parent().children.append(b)
         self.setResult(b)
-        
+
     def characters(self, chrs):
         self.result().text.append(chrs)
-        
+
+
 class CHandler(xmlimport.BaseHandler):
+
     def startElementNS(self, name, qname, attrs):
         c = C()
         self.parent().children.append(c)
         self.setResult(c)
-        
+
+
 class RAHandler(AHandler):
+
     def isElementAllowed(self, name):
         return name[1] not in ('c', 'd')
-        
+
+
 class RBHandler(BHandler):
+
     def isTextAllowed(self, chrs):
         return chrs != 'foo'
-        
+
+
 class RCHandler(CHandler):
     pass
+
 
 class NotAllowedTestCase(unittest.TestCase):
     def setUp(self):
@@ -346,7 +404,7 @@ class NotAllowedTestCase(unittest.TestCase):
             (None, 'b'): RBHandler,
             (None, 'c'): RCHandler,
             })
-        
+
     def test_accepted(self):
         result = self._importer.importFromString('<a><b><c>foo</c></b></a>',
                                                  result=Container())
@@ -359,11 +417,12 @@ class NotAllowedTestCase(unittest.TestCase):
             self.assertEquals(A, type(r.children[0]))
             self.assertEquals(B, type(r.children[0].children[0]))
             self.assertEquals(C, type(r.children[0].children[0].children[0]))
-    
+
     def test_element_not_allowed(self):
-        self.assertRaises(xmlimport.ElementNotAllowedError,
-                          self._rimporter.importFromString, '<a><c></c></a>',
-                          result=Container())
+        self.assertRaises(
+            xmlimport.ElementNotAllowedError,
+            self._rimporter.importFromString, '<a><c></c></a>',
+            result=Container())
 
     def test_element_not_allowed_no_subhandler(self):
         self.assertRaises(xmlimport.ElementNotAllowedError,
@@ -373,14 +432,14 @@ class NotAllowedTestCase(unittest.TestCase):
     def test_element_not_allowed_ignore(self):
         result = self._rimporter.importFromString(
             '<a><c></c></a>',
-            settings=xmlimport.IGNORE_SETTINGS,
+            options={'ignore_not_allowed': True},
             result=Container())
         self.assertEquals(0, len(result.children[0].children))
 
     def test_element_not_allowed_ignore2(self):
         result = self._rimporter.importFromString(
             '<a><c><b></b></c><b/></a>',
-            settings=xmlimport.IGNORE_SETTINGS,
+            options={'ignore_not_allowed': True},
             result=Container())
         self.assertEquals(1, len(result.children[0].children))
         self.assertEquals(B, type(result.children[0].children[0]))
@@ -396,11 +455,11 @@ class NotAllowedTestCase(unittest.TestCase):
         # in b sub element we can find a c
         self.assertEquals(1, len(result.children[0].children[1].children))
         self.assertEquals(C, type(result.children[0].children[1].children[0]))
-        
+
     def test_element_not_allowed_ignore3(self):
         result = self._rimporter.importFromString(
             '<a><a><c/></a><b><c/></b></a>',
-            settings=xmlimport.IGNORE_SETTINGS,
+            options={'ignore_not_allowed': True},
             result=Container())
         self.assertEquals(2, len(result.children[0].children))
         # in a sub element we can find nothing
@@ -412,17 +471,14 @@ class NotAllowedTestCase(unittest.TestCase):
     def test_element_not_allowed_ignore4(self):
         result = self._rimporter.importFromString(
             '<a><c><hoi/><dag/><a><b></b></a></c></a>',
-            settings=xmlimport.IGNORE_SETTINGS,
+            options={'ignore_not_allowed': True},
             result=Container())
         self.assertEquals(0, len(result.children[0].children))
-        
+
+
 def test_suite():
     suite = unittest.TestSuite()
     for testcase in [XMLImportTestCase, NoStartObjectImportTestCase,
                      ImportExportTestCase, NotAllowedTestCase]:
         suite.addTest(unittest.makeSuite(testcase))
     return suite
-
-if __name__ == '__main__':
-    unittest.main()
-    

@@ -26,10 +26,10 @@ class HookableHandler:
     getOutputHandler().
     """
 
-    def __init__(self, output_handler):
-        self._output_handler = output_handler
+    def __init__(self, parent):
+        self._parent = parent
 
-    def _hookedExecute(self, method_name, *args, **kw):
+    def _warp(self, method_name, *args, **kw):
         simple = getattr(self, method_name + '_simple', None)
         if simple is not None:
             simple()
@@ -44,46 +44,50 @@ class HookableHandler:
         if override is not None:
             override(*args, **kw)
         else:
-            getattr(self._output_handler, method_name)(*args, **kw)
-
-    def setDocumentLocator(self, parser):
-        self._output_handler.setDocumentLocator(parser)
-
-    def startDocument(self):
-        self._hookedExecute('startDocument')
-
-    def endDocument(self):
-        self._hookedExecute('endDocument')
-
-    def startPrefixMapping(self, prefix, uri):
-        self._hookedExecute('startPrefixMapping', prefix, uri)
-
-    def endPrefixMapping(self, prefix):
-        self._hookedExecute('endPrefixMapping', prefix)
-
-    def startElement(self, name, attrs):
-        self._hookedExecute('startElement', name, attrs)
-
-    def endElement(self, name):
-        self._hookedExecute('endElement', name)
-
-    def startElementNS(self, name, qname, attrs):
-        self._hookedExecute('startElementNS', name, qname, attrs)
-
-    def endElementNS(self, name, qname):
-        self._hookedExecute('endElementNS', name, qname)
-
-    def characters(self, content):
-        self._hookedExecute('characters', content)
-
-    def ignorableWhitespace(self, chars):
-        self._hookedExecute('ignorableWhitespace', chars)
-
-    def processingInstruction(self, target, data):
-        self._hookedExecute('processingInstruction', target, data)
-
-    def skippedEntity(self, name):
-        self._skippedEntity('skippedEntity', target, data)
+            getattr(self._parent, method_name)(*args, **kw)
 
     def getOutputHandler(self):
-        return self._output_handler
+        return self._parent
+
+    def setDocumentLocator(self, parser):
+        self._parent.setDocumentLocator(parser)
+
+    def result(self):
+        return self._parent.result()
+
+    def startDocument(self):
+        self._warp('startDocument')
+
+    def endDocument(self):
+        self._warp('endDocument')
+
+    def startPrefixMapping(self, prefix, uri):
+        self._warp('startPrefixMapping', prefix, uri)
+
+    def endPrefixMapping(self, prefix):
+        self._warp('endPrefixMapping', prefix)
+
+    def startElement(self, name, attrs):
+        self._warp('startElement', name, attrs)
+
+    def endElement(self, name):
+        self._warp('endElement', name)
+
+    def startElementNS(self, name, qname, attrs):
+        self._warp('startElementNS', name, qname, attrs)
+
+    def endElementNS(self, name, qname):
+        self._warp('endElementNS', name, qname)
+
+    def characters(self, content):
+        self._warp('characters', content)
+
+    def ignorableWhitespace(self, chars):
+        self._warp('ignorableWhitespace', chars)
+
+    def processingInstruction(self, target, data):
+        self._warp('processingInstruction', target, data)
+
+    def skippedEntity(self, name):
+        self._warp('skippedEntity', name)
+

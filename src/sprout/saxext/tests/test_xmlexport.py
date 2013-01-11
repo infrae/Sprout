@@ -100,7 +100,7 @@ class XMLExportTestCase(unittest.TestCase):
             Bar, BarProducer)
         self.exporter = exporter
 
-    def test_export(self):
+    def test_export_to_string(self):
         tree = Foo([Bar('one', 'a'), Bar('two', 'b')])
         self.assertEquals(
             '<?xml version="1.0" encoding="utf-8"?>\n<foo xmlns="http://www.infrae.com/ns/test"><bar myattr="a">one</bar><bar myattr="b">two</bar></foo>',
@@ -127,7 +127,7 @@ class XMLExportAdaptedTestCase(unittest.TestCase):
     def tearDown(self):
         cleanUp()
 
-    def test_export(self):
+    def test_export_to_string(self):
         tree = Foo([Bar('one', 'a'), Bar('two', 'b')])
         self.assertEquals(
             '<?xml version="1.0" encoding="utf-8"?>\n<foo xmlns="http://www.infrae.com/ns/test"><bar myattr="a">one</bar><bar myattr="b">two</bar></foo>',
@@ -156,15 +156,13 @@ class NSAttrProducer(xmlexport.BaseProducer):
 class XMLExportNamespaceTestCase(unittest.TestCase):
 
     def setUp(self):
-        exporter = xmlexport.Exporter(
+        self.exporter = xmlexport.Exporter(
             'http://www.infrae.com/ns/test')
-        exporter.registerNamespace('test2',
-                                   'http://www.infrae.com/ns/test2')
-        exporter.registerProducer(
-            Foo, FooProducer)
-        exporter.registerProducer(
-            Baz, NSAttrProducer)
-        self.exporter = exporter
+        self.exporter.registerNamespace(
+            'test2',
+            'http://www.infrae.com/ns/test2')
+        self.exporter.registerProducer(Foo, FooProducer)
+        self.exporter.registerProducer(Baz, NSAttrProducer)
 
     def test_namespaced_attribute(self):
         tree = Foo([Baz()])
@@ -176,10 +174,8 @@ class XMLExportNamespaceTestCase(unittest.TestCase):
 class NoDefaultNamespaceTestCase(unittest.TestCase):
 
     def setUp(self):
-        exporter = xmlexport.Exporter(None)
-        exporter.registerProducer(
-            Foo, FooProducer)
-        self.exporter = exporter
+        self.exporter = xmlexport.Exporter(None)
+        self.exporter.registerProducer(Foo, FooProducer)
 
     def test_no_namespace_declaration(self):
         tree = Foo([])
@@ -199,10 +195,8 @@ class CustomXMLGenerator(XMLGenerator):
 class XMLGeneratorTest(unittest.TestCase):
 
     def setUp(self):
-        exporter = xmlexport.Exporter(None, CustomXMLGenerator)
-        exporter.registerProducer(
-            Foo, FooProducer)
-        self.exporter = exporter
+        self.exporter = xmlexport.Exporter(None, CustomXMLGenerator)
+        self.exporter.registerProducer(Foo, FooProducer)
 
     def test_custom_generator(self):
         tree = Foo([])
@@ -214,11 +208,9 @@ class XMLGeneratorTest(unittest.TestCase):
 class FallbackTest(unittest.TestCase):
 
     def setUp(self):
-        exporter = xmlexport.Exporter(None, CustomXMLGenerator)
-        exporter.registerProducer(
-            Foo, FooProducer)
-        exporter.registerFallbackProducer(GooProducer)
-        self.exporter = exporter
+        self.exporter = xmlexport.Exporter(None, CustomXMLGenerator)
+        self.exporter.registerProducer(Foo, FooProducer)
+        self.exporter.registerFallbackProducer(GooProducer)
 
     def test_fallback_producer(self):
         tree = Foo([Baz()])
@@ -234,8 +226,5 @@ def test_suite():
                      XMLGeneratorTest, FallbackTest]:
         suite.addTest(unittest.makeSuite(testcase))
     return suite
-
-if __name__ == '__main__':
-    unittest.main()
 
 

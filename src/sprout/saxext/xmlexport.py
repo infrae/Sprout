@@ -1,7 +1,8 @@
 """
 An XML exporter based on SAX events.
 """
-from StringIO import StringIO
+import tempfile
+import os
 
 from grokcore import component
 from zope.component import queryMultiAdapter
@@ -9,35 +10,39 @@ from zope.interface import implements, Interface
 
 from sprout.saxext.generator import XMLGenerator
 from sprout.saxext.interfaces import IExporterRegistry, IXMLProducer
+from sprout.saxext.utils import Options
 
 
 class XMLExportError(Exception):
     pass
 
 
-class BaseSettings(object):
-    """Base class of settings sent to XML generation.
-
-    Subclass this for custom settings objects.
+class ExporterTemporaryResult(object):
+    """Exporter temporary result in a temporary file. Large exports
+    cannot be conained in memory, we have to use a file for it.
     """
-    def __init__(self, asDocument=True, outputEncoding='utf-8'):
-        self._asDocument = asDocument
-        self._outputEncoding = outputEncoding
+    __slots__ = ('filename', 'file')
 
-    def asDocument(self):
-        """Export XML as document with full prolog.
-        """
-        return self._asDocument
+    def __init__(self, handle, filename):
+        self.filename = filename
+        self.file = os.fdopen(handle, 'w+')
 
-    def outputEncoding(self):
-        """Encoding the document will be output as.
-        """
-        return self._outputEncoding
+    def __enter__(self):
+        return self
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
-# null settings contains the default settings
-NULL_SETTINGS = BaseSettings()
+    def read(self, *args):
+        return self.file.read(*args)
 
+    def seek(self, *args):
+        return self.file.seek(*args)
+
+    def close(self):
+        # Remove the temporary file when it is closed.
+        self.file.close()
+        os.remove(self.filename)
 
 class Exporter(object):
     """Export objects to XML, using SAX.
@@ -45,6 +50,7 @@ class Exporter(object):
     implements(IExporterRegistry)
 
     def __init__(self, default_namespace, generator=None):
+        self._defaults = {'as_document': True, 'encoding': 'utf-8'}
         self._mapping = {}
         self._fallback = None
         self._default_namespace = default_namespace
@@ -54,6 +60,15 @@ class Exporter(object):
         self._generator = generator
 
     # MANIPULATORS
+
+    def registerOption(self, name, default=None):
+        """Register an option that can be queried by producer later
+        on.
+
+        name - Name of the existing option. If provided in the options
+        dictionary it will be returned, otherwise None will be.
+        """
+        self._defaults[name] = default
 
     def registerProducer(self, klass, producer_factory):
         """Register an XML producer factory for a class.
@@ -84,36 +99,51 @@ class Exporter(object):
 
     # ACCESSORS
 
-    def exportToSax(self, obj, handler, settings=NULL_SETTINGS, info=None):
+    def exportToSax(self, exported, handler, options=None, extra=None):
         """Export to sax events on handler.
 
-        obj - the object to convert to XML
+        exported - the object to convert to XML
         handler - a SAX event handler that events will be sent to
         settings - optionally a settings object to configure export
         """
-        if settings.asDocument():
+        options = self.getOptions(options)
+        if options.as_document:
             handler.startDocument()
         if self._default_namespace is not None:
             handler.startPrefixMapping(None, self._default_namespace)
         for prefix, uri in self._namespaces.items():
             handler.startPrefixMapping(prefix, uri)
-        producer = ExportConfiguration(
-            self, handler, settings, info).getProducer(obj)
+        configuration = ExportConfiguration(
+            self, exported, handler, options, extra)
+        producer = configuration.getProducer(exported)
         producer.sax()
-        if settings.asDocument():
+        if options.as_document:
             handler.endDocument()
 
-    def exportToFile(self, obj, file, settings=NULL_SETTINGS, info=None):
+    def exportToStream(self, exported, file, options=None, extra=None):
         """Export object by writing XML to file object.
 
-        obj - the object to convert to XML
+        exported - the object to convert to XML
         file - a Python file object to write to
         settings - optionally a settings object to configure export
         """
-        handler = self._generator(file, settings.outputEncoding())
-        self.exportToSax(obj, handler, settings, info)
+        options = self.getOptions(options)
+        handler = self._generator(file, options.encoding)
+        self.exportToSax(exported, handler, options, extra)
 
-    def exportToString(self, obj, settings=NULL_SETTINGS, info=None):
+    def exportToTemporary(self, exported, options=None, extra=None):
+        """Export the object into a temporary file.
+        """
+        result = ExporterTemporaryResult(*tempfile.mkstemp('.xml'))
+        try:
+            self.exportToStream(exported, result.file, options, extra)
+        except:
+            result.close()
+            raise
+        result.seek(0)
+        return result
+
+    def exportToString(self, exported, options=None, extra=None):
         """Export object as XML string.
 
         obj - the object to convert to XML
@@ -121,32 +151,46 @@ class Exporter(object):
 
         Returns XML string.
         """
-        f = StringIO()
-        self.exportToFile(obj, f, settings, info)
-        result = f.getvalue()
-        f.close()
-        return result
+        with self.exportToTemporary(exported, options, extra) as output:
+            return output.read()
 
     def getDefaultNamespace(self):
         """The default namespace for the XML generated by this exporter.
         """
         return self._default_namespace
 
+    def getNamespaces(self, prefix=False):
+        if prefix:
+            return self._namespaces.items()
+        return self._namespaces.values()
+
+    def getOptions(self, options):
+        """Return the set of possible options.
+        """
+        if isinstance(options, Options):
+            return options
+        return Options(options, self._defaults.copy())
+
 
 class ExportConfiguration(object):
     implements(Interface)
 
-    def __init__(self, registry, handler, settings, info):
-        self._settings = settings
-        self._info = info
+    def __init__(self, registry, exported, handler, options, extra):
+        self._exported = exported
+        self._options = options
+        self._extra = extra
         self.handler = handler
         self.registry = registry
 
-    def getInfo(self):
-        return self._info
+    def getExported(self):
+        # Return exported object.
+        return self._exported
 
-    def getSettings(self):
-        return self._settings
+    def getExtra(self):
+        return self._extra
+
+    def getOptions(self):
+        return self._options
 
     def getDefaultNamespace(self):
         return self.registry.getDefaultNamespace()
@@ -199,11 +243,14 @@ class BaseProducer(object):
         self.handler = configuration.handler
         self.configuration = configuration
 
-    def getInfo(self):
-        return self.configuration.getInfo()
+    def getExported(self):
+        return self.configuration.getExported()
 
-    def getSettings(self):
-        return self.configuration.getSettings()
+    def getExtra(self):
+        return self.configuration.getExtra()
+
+    def getOptions(self):
+        return self.configuration.getOptions()
 
     def sax(self):
         """To be overridden in subclasses
