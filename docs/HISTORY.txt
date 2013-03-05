@@ -1,10 +1,22 @@
 Changes
 =======
 
-1.0.6 (unreleased)
-------------------
+1.1 (05/03/2013)
+----------------
 
-* ...
+Improve sprout.saxext xmlimport and xmlexport classes:
+
+* To make available user-defined options to the handlers. Those
+  options have to be defined with the help of ``registerOption``
+  before being usuable.
+
+* To support work on temporary files and already opened files. This is
+  more efficient on large import and export, and prevent to create
+  large StringIO objects.
+
+
+Every piece of code using those classes will need to be updated to
+work with this new version.
 
 1.0.5 (03/09/2012)
 ------------------
