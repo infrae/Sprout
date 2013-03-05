@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2013  Infrae. All rights reserved.
+# See also LICENSE.txt
 """
 This module is intended for parsing chaotic HTML-ish user input into a
 sane DOM tree. It can be used to define subsets of HTML (or subsets

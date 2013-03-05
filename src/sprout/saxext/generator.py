@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2013  Infrae. All rights reserved.
+# See also LICENSE.txt
 """A cleaned up SAX generator. Also include stable generator.
 """
 import xml.sax.handler

@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2013  Infrae. All rights reserved.
+# See also LICENSE.txt
 # -*- coding: UTF-8 -*-
 import unittest
 from sprout.saxext.generator import XMLGenerator

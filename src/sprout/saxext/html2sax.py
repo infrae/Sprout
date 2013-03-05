@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2013  Infrae. All rights reserved.
+# See also LICENSE.txt
 
 from HTMLParser import HTMLParser
 from htmlentitydefs import name2codepoint

@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2013  Infrae. All rights reserved.
+# See also LICENSE.txt
 """
 Take SAX events, produce SAX events collapsing subsequent characters()
 events into one if possible.
