@@ -12,7 +12,7 @@ Improve sprout.saxext xmlimport and xmlexport classes:
 
 * To support work on temporary files and already opened files. This is
   more efficient on large import and export, and prevent to create
-  large StringIO objects.
+  large ``StringIO`` objects.
 
 
 Every piece of code using those classes will need to be updated to
