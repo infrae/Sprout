@@ -366,9 +366,10 @@ class BaseHandler(object):
         return self._extra
 
     def getData(self, key):
-        if self._data.has_key(key):
-            return self._data[key]
-        return None
+        return self._data.get(key)
+
+    def clearData(self):
+        self._data = {}
 
     def getDocumentLocator(self):
          return self._locator
