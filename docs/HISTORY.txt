@@ -1,10 +1,11 @@
 Changes
 =======
 
-1.1.1 (unreleased)
+1.1.1 (23/05/2013)
 ------------------
 
-* ...
+* Improve sprout.saxext xmlimport ``getData`` and ``clearData`` that
+  wipe all data associated with the importer in one pass.
 
 1.1 (05/03/2013)
 ----------------
