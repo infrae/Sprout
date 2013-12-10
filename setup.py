@@ -13,7 +13,7 @@ tests_require = [
 
 setup(name='Sprout',
       version=version,
-      description="Common Python library which contains reusable components, developed at Infrae.",
+      description="Common components to work with XML/HTML documents.",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
       classifiers=[
@@ -28,7 +28,7 @@ setup(name='Sprout',
       keywords='html sax parser xml',
       author='Martijn Faassen',
       author_email='info@infrae.com',
-      url='http://infrae.com/download/Sprout',
+      url='https://github.com/infrae/Sprout',
       license='BSD, GPL and PythonLicence',
       packages=find_packages('src', exclude=['ez_setup']),
       package_dir = {'': 'src'},

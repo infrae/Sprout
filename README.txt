@@ -34,5 +34,5 @@ Sprout's focus is mainly currently XML related. It features:
 Code repository
 ===============
 
-The code for this extension can be found in Mercurial:
-https://hg.infrae.com/Sprout
+The code for this extension can be found in Git:
+https://github.com/infrae/Sprout
